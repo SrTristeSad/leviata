@@ -1,0 +1,11 @@
+/* Exemplos Matemáticos */
+escrever("=== MATEMÁTICA ===")
+
+escrever("Raiz de 16:", raiz(16))
+escrever("2^8:", potencia(2, 8))
+escrever("Pi:", pi())
+escrever("Seno(0):", seno(0))
+escrever("Arredondar(3.7):", arredondar(3.7))
+escrever("Máximo(5, 9):", maximo(5, 9))
+escrever("Mínimo(5, 9):", minimo(5, 9))
+escrever("Aleatório inteiro 1-100:", aleatorio_inteiro(1, 100))

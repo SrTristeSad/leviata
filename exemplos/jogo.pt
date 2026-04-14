@@ -1,0 +1,25 @@
+/* Exemplo de Motor de Jogos */
+escrever("=== MOTOR DE JOGOS ===")
+
+jogo_iniciar("Meu Jogo PT", 1280, 720, 60)
+
+/* Simula um frame do game loop */
+jogo_iniciar_frame()
+jogo_limpar_fundo(20, 20, 40)
+jogo_desenhar_sprite("jogador.png", 640, 360)
+jogo_desenhar_sprite("inimigo.png", 200, 300)
+
+var tiro = jogo_tecla(32)
+se (tiro) {
+    escrever("Espaço pressionado - ATIRAR!")
+}
+
+var mx = jogo_mouse_x()
+var my = jogo_mouse_y()
+escrever("Mouse em:", mx, my)
+
+var dt = jogo_delta()
+escrever("Delta time:", dt, "segundos")
+
+jogo_finalizar_frame()
+jogo_fechar()

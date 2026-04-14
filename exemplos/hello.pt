@@ -1,0 +1,10 @@
+/* Olá Mundo na Linguagem PT */
+escrever("Olá, Mundo!")
+
+var x = 10
+var y = 20
+escrever("Soma:", x + y)
+
+se (x < y) {
+    escrever("x é menor que y")
+}
