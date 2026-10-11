@@ -1,24 +1,23 @@
-/* Exemplo de Listas (Arrays Dinâmicos) */
-escrever("=== LISTAS ===")
+/* Listas no Leviata 3 */
+escreva("=== LISTAS ===")
 
 var frutas = ["maçã", "banana", "laranja"]
-escrever("Frutas:", tamanho(frutas), "itens")
-escrever("Primeira:", frutas[0])
+escreva("Frutas:", tamanho(frutas), "itens")
+escreva("Primeira:", frutas[0])
 
-lista_adicionar(frutas, "uva")
-escrever("Após adicionar uva:", tamanho(frutas))
+adicionar(frutas, "uva")
+escreva("Após adicionar uva:", tamanho(frutas))
 
-/* Laço sobre lista */
-var i = 0
-enquanto (i < tamanho(frutas)) {
-    escrever("-", frutas[i])
-    i = i + 1
+/* Percorrer coleção sem índice manual. */
+para fruta em frutas {
+    escreva("-", fruta)
 }
 
-/* Lista de números com para-de-ate */
 var numeros = [10, 20, 30, 40, 50]
 var soma = 0
-para k de 0 ate 4 {
-    soma = soma + numeros[k]
+para numero em numeros {
+    soma = soma + numero
 }
-escrever("Soma dos números:", soma)
+
+escreva("Soma dos números:", soma)
+escreva("Contém banana:", contem(frutas, "banana"))
