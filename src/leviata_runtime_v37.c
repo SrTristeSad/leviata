@@ -1,16 +1,11 @@
 /* ============================================================================
  * LEVIATA 3.7 - RUNTIME DE MODULOS ISOLADOS
  *
- * A VM continua possuindo uma tabela global única, mas módulos não publicam
- * seus nomes diretamente nela. O linker troca referências globais do bytecode
- * por nomes internos inacessíveis ao código-fonte, como @m3:0.
- *
- * Resultado:
- *   - privados não vazam para o importador;
- *   - funções/métodos continuam enxergando os globais do módulo onde nasceram;
- *   - classes preservam o nome humano em tipo(obj);
- *   - imports entre módulos são ligados diretamente ao símbolo interno alvo;
- *   - a biblioteca padrão continua global e compartilhada.
+ * O linker troca referências globais próprias do módulo por nomes internos
+ * inacessíveis ao fonte (@mN:X). Imports entre módulos apontam diretamente
+ * para esses símbolos. Para chamadas qualificadas dentro de outro módulo,
+ * nomes como `util.funcao` são instalados apenas durante a compilação como
+ * dicas de resolução estática e removidos antes da execução.
  * ============================================================================ */
 #include "leviata_runtime.h"
 #include "leviata_ast.h"
@@ -22,16 +17,12 @@
 
 AstNode *leviata_parse(const char *source, int *had_error);
 
-/* --------------------------------------------------------------------------
- * Arquivos e caminhos
- * -------------------------------------------------------------------------- */
 static char *runtime_read_file(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "[LEVIATA][Modulo] Nao foi possivel abrir: %s\n", path);
         return NULL;
     }
-
     if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
     long size = ftell(f);
     if (size < 0) { fclose(f); return NULL; }
@@ -43,7 +34,6 @@ static char *runtime_read_file(const char *path) {
         fprintf(stderr, "[LEVIATA][Modulo] Sem memoria para: %s\n", path);
         return NULL;
     }
-
     size_t count = fread(buf, 1, (size_t)size, f);
     buf[count] = '\0';
     fclose(f);
@@ -135,7 +125,6 @@ static void path_dirname(const char *origin, char *out, size_t out_size) {
         snprintf(out, out_size, ".");
         return;
     }
-
     char normalized[LV_MODULE_PATH_MAX];
     path_normalize(origin, normalized, sizeof(normalized));
     char *last = strrchr(normalized, '/');
@@ -147,7 +136,6 @@ static void path_dirname(const char *origin, char *out, size_t out_size) {
         snprintf(out, out_size, "/");
         return;
     }
-
     *last = '\0';
     snprintf(out, out_size, "%s", normalized);
 }
@@ -160,7 +148,6 @@ static void resolve_import(const char *origin,
         path_normalize(requested, out, out_size);
         return;
     }
-
     char dir[LV_MODULE_PATH_MAX];
     char combined[LV_MODULE_PATH_MAX * 2];
     path_dirname(origin, dir, sizeof(dir));
@@ -193,19 +180,14 @@ static void print_cycle(LvRuntime *rt, const char *path) {
     fprintf(stderr, "  -> %s\n", path);
 }
 
-/* --------------------------------------------------------------------------
- * Registro e símbolos de módulo
- * -------------------------------------------------------------------------- */
 static LvModuleExports *module_find(LvRuntime *rt, const char *path, int create) {
     if (!rt || !path) return NULL;
-
     char normalized[LV_MODULE_PATH_MAX];
     if (path[0] == '<') snprintf(normalized, sizeof(normalized), "%s", path);
     else path_normalize(path, normalized, sizeof(normalized));
 
     for (LvModuleExports *m = rt->exports; m; m = m->next)
         if (strcmp(m->path, normalized) == 0) return m;
-
     if (!create) return NULL;
 
     LvModuleExports *m = (LvModuleExports*)calloc(1, sizeof(LvModuleExports));
@@ -214,10 +196,7 @@ static LvModuleExports *module_find(LvRuntime *rt, const char *path, int create)
     m->capacity = 8;
     m->names = (char(*)[LV_MAX_IDENTIFIER])calloc(
         (size_t)m->capacity, LV_MAX_IDENTIFIER);
-    if (!m->names) {
-        free(m);
-        return NULL;
-    }
+    if (!m->names) { free(m); return NULL; }
     m->module_id = ++rt->next_module_id;
     m->next = rt->exports;
     rt->exports = m;
@@ -246,7 +225,6 @@ static int export_name_add(LvModuleExports *m, const char *name) {
         m->names = p;
         m->capacity = nova;
     }
-
     snprintf(m->names[m->count], LV_MAX_IDENTIFIER, "%s", name);
     m->count++;
     return 1;
@@ -281,13 +259,11 @@ static int call_is_marker(AstNode *node, const char *name) {
 
 static int collect_module_symbols(LvModuleExports *m, AstNode *program) {
     if (!m || !program || program->type != AST_PROGRAM) return 0;
-
     m->symbol_count = 0;
     m->link_count = 0;
     m->count = 0;
     m->has_explicit_exports = 0;
 
-    /* Primeiro descubra tudo que pertence ao próprio arquivo. */
     for (int i = 0; i < program->as.program.count; i++) {
         AstNode *stmt = program->as.program.stmts[i];
         if (!stmt) continue;
@@ -300,7 +276,6 @@ static int collect_module_symbols(LvModuleExports *m, AstNode *program) {
         }
     }
 
-    /* Depois aplique a lista explícita de exportações. */
     for (int i = 0; i < program->as.program.count; i++) {
         AstNode *stmt = program->as.program.stmts[i];
         if (!call_is_marker(stmt, "__leviata_exportar")) continue;
@@ -309,7 +284,6 @@ static int collect_module_symbols(LvModuleExports *m, AstNode *program) {
             fprintf(stderr, "[LEVIATA][Modulo] Exportacao interna invalida em %s\n", m->path);
             return 0;
         }
-
         const char *name = stmt->as.call.args[0]->as.str_lit.value;
         LvModuleSymbol *s = module_symbol(m, name);
         if (!s) {
@@ -323,16 +297,14 @@ static int collect_module_symbols(LvModuleExports *m, AstNode *program) {
         if (!export_name_add(m, name)) return 0;
     }
 
-    /* Compatibilidade 3.3-3.6: módulo antigo sem `exportar` publica suas
-     * declarações quando é importado, mas elas ainda ficam internamente
-     * isoladas e não vazam por simples execução do arquivo. */
+    /* Compatibilidade 3.3-3.6: arquivo sem `exportar` publica suas declarações
+     * quando importado. Os nomes continuam internamente isolados. */
     if (!m->has_explicit_exports) {
         for (int i = 0; i < m->symbol_count; i++) {
             m->symbols[i].exported = 1;
             if (!export_name_add(m, m->symbols[i].name)) return 0;
         }
     }
-
     return 1;
 }
 
@@ -340,15 +312,12 @@ static int module_link_add(LvModuleExports *m,
                            const char *visible,
                            const char *target) {
     if (!m || !visible || !target) return 0;
-
-    /* Declaração local e import sem alias com o mesmo nome são ambíguos. */
     if (module_symbol(m, visible)) {
         fprintf(stderr,
                 "[LEVIATA][Modulo] Import '%s' colide com declaracao local em %s\n",
                 visible, m->path);
         return 0;
     }
-
     for (int i = 0; i < m->link_count; i++) {
         if (strcmp(m->links[i].visible, visible) == 0) {
             if (strcmp(m->links[i].target, target) == 0) return 1;
@@ -358,12 +327,10 @@ static int module_link_add(LvModuleExports *m,
             return 0;
         }
     }
-
     if (m->link_count >= LV_MODULE_SYMBOL_MAX * 2) {
         fprintf(stderr, "[LEVIATA][Modulo] Muitos imports em %s\n", m->path);
         return 0;
     }
-
     LvModuleLink *l = &m->links[m->link_count++];
     snprintf(l->visible, sizeof(l->visible), "%s", visible);
     snprintf(l->target, sizeof(l->target), "%s", target);
@@ -374,7 +341,6 @@ static int link_exports_into_module(LvModuleExports *dst,
                                     LvModuleExports *src,
                                     const char *alias) {
     if (!dst || !src) return 0;
-
     for (int i = 0; i < src->symbol_count; i++) {
         LvModuleSymbol *s = &src->symbols[i];
         if (!s->exported) continue;
@@ -389,17 +355,12 @@ static int link_exports_into_module(LvModuleExports *dst,
         } else {
             snprintf(visible, sizeof(visible), "%s", s->name);
         }
-
         if (!module_link_add(dst, visible, s->internal)) return 0;
 
         if (s->is_class) {
             char ctor_visible[LV_MAX_IDENTIFIER];
-            int n = snprintf(ctor_visible, sizeof(ctor_visible),
-                             "novo %s", visible);
-            if (n < 0 || (size_t)n >= sizeof(ctor_visible)) {
-                fprintf(stderr, "[LEVIATA][Modulo] Nome de construtor importado longo demais\n");
-                return 0;
-            }
+            int n = snprintf(ctor_visible, sizeof(ctor_visible), "novo %s", visible);
+            if (n < 0 || (size_t)n >= sizeof(ctor_visible)) return 0;
             if (!module_link_add(dst, ctor_visible, s->ctor_internal)) return 0;
         }
     }
@@ -416,7 +377,6 @@ static int bind_root_symbol(LvVM *vm,
                 internal);
         return 0;
     }
-
     LvObject *existing = hmap_get(&vm->globals, visible);
     if (existing && existing != value) {
         fprintf(stderr, "[LEVIATA][Modulo] Colisao ao importar '%s'\n", visible);
@@ -430,7 +390,6 @@ static int bind_exports_into_root(LvVM *vm,
                                   LvModuleExports *src,
                                   const char *alias) {
     if (!vm || !src) return 0;
-
     for (int i = 0; i < src->symbol_count; i++) {
         LvModuleSymbol *s = &src->symbols[i];
         if (!s->exported) continue;
@@ -442,13 +401,11 @@ static int bind_exports_into_root(LvVM *vm,
         } else {
             snprintf(visible, sizeof(visible), "%s", s->name);
         }
-
         if (!bind_root_symbol(vm, visible, s->internal)) return 0;
 
         if (s->is_class) {
             char ctor_visible[LV_MAX_IDENTIFIER];
-            int n = snprintf(ctor_visible, sizeof(ctor_visible),
-                             "novo %s", visible);
+            int n = snprintf(ctor_visible, sizeof(ctor_visible), "novo %s", visible);
             if (n < 0 || (size_t)n >= sizeof(ctor_visible)) return 0;
             if (!bind_root_symbol(vm, ctor_visible, s->ctor_internal)) return 0;
         }
@@ -456,16 +413,11 @@ static int bind_exports_into_root(LvVM *vm,
     return 1;
 }
 
-/* --------------------------------------------------------------------------
- * Linkedição de bytecode
- * -------------------------------------------------------------------------- */
 static const char *module_resolve_name(LvModuleExports *m, const char *name) {
     if (!m || !name) return NULL;
-
     for (int i = 0; i < m->symbol_count; i++) {
         LvModuleSymbol *s = &m->symbols[i];
         if (strcmp(s->name, name) == 0) return s->internal;
-
         if (s->is_class) {
             char ctor[LV_MAX_IDENTIFIER];
             int n = snprintf(ctor, sizeof(ctor), "novo %s", s->name);
@@ -473,30 +425,24 @@ static const char *module_resolve_name(LvModuleExports *m, const char *name) {
                 return s->ctor_internal;
         }
     }
-
     for (int i = 0; i < m->link_count; i++)
         if (strcmp(m->links[i].visible, name) == 0)
             return m->links[i].target;
-
     return NULL;
 }
 
 static void rewrite_chunk_globals(Chunk *chunk, LvModuleExports *m) {
     if (!chunk || !m) return;
-
     for (int i = 0; i < chunk->count; i++) {
         Instruction *inst = &chunk->code[i];
         if (inst->opcode != OP_LOAD_GLOBAL && inst->opcode != OP_STORE_GLOBAL)
             continue;
-
         int ci = inst->operand;
         if (ci < 0 || ci >= chunk->const_count) continue;
         ConstValue *cv = &chunk->constants[ci];
         if (cv->type != LV_TYPE_STRING) continue;
-
         const char *target = module_resolve_name(m, cv->as.s_val);
-        if (!target) continue;
-        snprintf(cv->as.s_val, sizeof(cv->as.s_val), "%s", target);
+        if (target) snprintf(cv->as.s_val, sizeof(cv->as.s_val), "%s", target);
     }
 }
 
@@ -509,9 +455,57 @@ static void rewrite_module_bytecode(LvVM *vm,
         rewrite_chunk_globals(vm->functions[i], m);
 }
 
-/* --------------------------------------------------------------------------
- * Diretivas de módulo na AST
- * -------------------------------------------------------------------------- */
+/* O compilador reconhece API qualificada consultando vm->globals. Links de
+ * módulos não devem permanecer ali, então são inseridos somente enquanto o
+ * AST atual é compilado e removidos por reconstrução segura da HashMap. */
+static int hint_name_exists(char names[][LV_MAX_IDENTIFIER], int count,
+                            const char *name) {
+    for (int i = 0; i < count; i++)
+        if (strcmp(names[i], name) == 0) return 1;
+    return 0;
+}
+
+static int install_compile_hints(LvVM *vm,
+                                 LvModuleExports *m,
+                                 char added[][LV_MAX_IDENTIFIER],
+                                 int *added_count) {
+    *added_count = 0;
+    if (!vm || !m) return 1;
+
+    for (int i = 0; i < m->link_count; i++) {
+        const char *visible = m->links[i].visible;
+        if (!strchr(visible, '.')) continue;
+        if (strncmp(visible, "novo ", 5) == 0) continue;
+        if (hmap_has(&vm->globals, visible)) continue;
+        if (*added_count >= LV_MODULE_SYMBOL_MAX * 2) return 0;
+
+        LvObject *value = hmap_get(&vm->globals, m->links[i].target);
+        if (!value) value = vm->nil_singleton;
+        hmap_set(&vm->globals, visible, value);
+        snprintf(added[*added_count], LV_MAX_IDENTIFIER, "%s", visible);
+        (*added_count)++;
+    }
+    return 1;
+}
+
+static int remove_compile_hints(LvVM *vm,
+                                char added[][LV_MAX_IDENTIFIER],
+                                int added_count) {
+    if (!vm || added_count <= 0) return 1;
+
+    HashMap rebuilt;
+    hmap_init(&rebuilt, vm->globals.capacity);
+    for (int i = 0; i < vm->globals.capacity; i++) {
+        HMapEntry *e = &vm->globals.entries[i];
+        if (!e->in_use) continue;
+        if (hint_name_exists(added, added_count, e->key)) continue;
+        hmap_set(&rebuilt, e->key, e->value);
+    }
+    free(vm->globals.entries);
+    vm->globals = rebuilt;
+    return 1;
+}
+
 static int ast_contains_module_directive(AstNode *node) {
     if (!node) return 0;
     if (node->type == AST_USE ||
@@ -582,7 +576,12 @@ static int process_imports(LvRuntime *rt,
 
         if (stmt->type == AST_USE) {
             char requested[LV_MODULE_PATH_MAX];
-            snprintf(requested, sizeof(requested), "%s", stmt->as.use_stmt.path);
+            size_t rlen = strlen(stmt->as.use_stmt.path);
+            if (rlen >= sizeof(requested)) {
+                fprintf(stderr, "[LEVIATA][Modulo] Caminho de importacao longo demais\n");
+                return 0;
+            }
+            memcpy(requested, stmt->as.use_stmt.path, rlen + 1);
             int has_alias = alias_marker_for_use(program, i, requested);
 
             char resolved[LV_MODULE_PATH_MAX];
@@ -596,13 +595,11 @@ static int process_imports(LvRuntime *rt,
                     : bind_exports_into_root(vm, imported, NULL);
                 if (!ok) return 0;
             }
-
             consume_program_stmt(program, i);
             continue;
         }
 
         if (call_is_marker(stmt, "__leviata_exportar")) {
-            /* A exportação já foi coletada antes da linkedição. */
             consume_program_stmt(program, i);
             continue;
         }
@@ -628,7 +625,6 @@ static int process_imports(LvRuntime *rt,
                 ? link_exports_into_module(current_module, imported, alias)
                 : bind_exports_into_root(vm, imported, alias);
             if (!ok) return 0;
-
             consume_program_stmt(program, i);
             continue;
         }
@@ -640,13 +636,9 @@ static int process_imports(LvRuntime *rt,
             return 0;
         }
     }
-
     return 1;
 }
 
-/* --------------------------------------------------------------------------
- * Execução
- * -------------------------------------------------------------------------- */
 static int execute_source_internal(LvRuntime *rt,
                                    LvVM *vm,
                                    const char *source,
@@ -680,6 +672,14 @@ static int execute_source_internal(LvRuntime *rt,
         return 0;
     }
 
+    char compile_hints[LV_MODULE_SYMBOL_MAX * 2][LV_MAX_IDENTIFIER];
+    int compile_hint_count = 0;
+    if (module &&
+        !install_compile_hints(vm, module, compile_hints, &compile_hint_count)) {
+        ast_free(ast);
+        return 0;
+    }
+
     int function_start = vm->func_count;
     Compiler compiler;
     compiler_init(&compiler, vm, NULL);
@@ -687,6 +687,9 @@ static int execute_source_internal(LvRuntime *rt,
     int ok = compiler_compile_program(&compiler, ast, &chunk);
     ast_free(ast);
     compiler_free(&compiler);
+
+    if (module)
+        remove_compile_hints(vm, compile_hints, compile_hint_count);
 
     if (!ok) {
         fprintf(stderr, "[LEVIATA] Erros de compilacao em %s.\n",
@@ -736,7 +739,6 @@ static LvModuleExports *runtime_load_module(LvRuntime *rt,
 
     rt->loading_count--;
     if (!ok) return NULL;
-
     module->loaded = 1;
     if (!runtime_add_loaded(rt, normalized)) return NULL;
     return module;
@@ -775,7 +777,6 @@ int leviata_execute_file(LvRuntime *rt,
 
     char normalized[LV_MODULE_PATH_MAX];
     path_normalize(path, normalized, sizeof(normalized));
-
     if (path_in_list(rt->loading, rt->loading_count, normalized)) {
         print_cycle(rt, normalized);
         return 0;
