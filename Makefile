@@ -19,6 +19,7 @@ SRC = src/main.c \
       src/leviata_world.c \
       src/leviata_canon.c \
       src/leviata_resources.c \
+      src/leviata_classes.c \
       src/leviata_canon_finalize.c
 
 RAYLIB_CFLAGS := $(shell pkg-config --cflags raylib 2>/dev/null)
