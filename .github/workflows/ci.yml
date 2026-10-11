@@ -39,6 +39,12 @@ jobs:
           ./leviata testes/gameplay.pt | tee /tmp/leviata-gameplay.log
           grep -q "GAMEPLAY_OK" /tmp/leviata-gameplay.log
 
+      - name: Run resource object regression suite
+        run: |
+          ./leviata testes/recursos.pt | tee /tmp/leviata-resources.log
+          grep -q "RECURSOS_OK" /tmp/leviata-resources.log
+          rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
+
       - name: Enforce Leviata 3 canonical surface
         run: |
           cat > /tmp/leviata-legado.pt <<'EOF'
@@ -64,3 +70,5 @@ jobs:
         run: |
           ./leviata_debug testes/nucleo.pt
           ./leviata_debug testes/gameplay.pt
+          ./leviata_debug testes/recursos.pt
+          rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
