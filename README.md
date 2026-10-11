@@ -2,7 +2,7 @@
 
 Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, FFI nativa e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.0**.
+A versão atual é **Leviata 3.1**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -23,7 +23,7 @@ se idade >= 18 {
 
 ## Vocabulário principal
 
-| Conceito | Forma comum em inglês | Leviata |
+| Conceito | Forma comum | Leviata |
 |---|---|---|
 | saída | `print` | `escreva` |
 | entrada | `input`, `read` | `leia` |
@@ -44,23 +44,16 @@ se idade >= 18 {
 | negação | `not`, `!` | `nao` |
 | função | `function`, `def`, `fn` | `funcao` |
 
-As palavras antigas como `retornar`, `quebrar`, `continuar`, `importar` e `herdar` não são a sintaxe canônica do Leviata 3.
+As formas antigas como `retornar`, `quebrar`, `continuar`, `importar`, `herdar`, `escrever()` e os operadores `&&`/`||` não pertencem à superfície canônica do Leviata 3.
 
 ## Repetições
-
-Faixa numérica:
 
 ```leviata
 para n de 1 ate 10 {
     escreva(n)
 }
-```
 
-Coleção:
-
-```leviata
 var frutas = ["maçã", "uva", "banana"]
-
 para fruta em frutas {
     escreva(fruta)
 }
@@ -94,8 +87,6 @@ escreva(soma(5, 3))
 
 ## Tipos e conversões
 
-As conversões frequentes usam nomes curtos:
-
 ```leviata
 txt(123)
 int("42")
@@ -104,7 +95,7 @@ bool(1)
 tipo("Leviata")
 ```
 
-`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista` e `nulo`.
+`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo` e `nulo`.
 
 ## Listas
 
@@ -122,7 +113,7 @@ remover(nomes, "Bia")
 limpar(nomes)
 ```
 
-Listas literais continuam simples:
+Acesso por índice continua direto:
 
 ```leviata
 var numeros = [10, 20, 30]
@@ -130,8 +121,6 @@ escreva(numeros[0])
 ```
 
 ## Matemática
-
-Operações autoexplicativas ficam no escopo global. Não existe a obrigação de escrever `mat.` antes delas.
 
 ```leviata
 raiz(25)
@@ -151,16 +140,76 @@ aleatorio_int(1, 100)
 pi
 ```
 
+## Objetos nativos — 3.1
+
+O ponto agora possui dois significados definidos pelo compilador:
+
+- API estática: `camera.seguir(...)`, `jogo.iniciar(...)`;
+- membro de um valor: `foto.desenhe(...)`, `dados.leia()`, `efeito.volume`.
+
+O compilador verifica se a cadeia existe como API global. Se não existir, trata o lado esquerdo como receptor de um campo ou método real.
+
+### Imagem
+
+```leviata
+jogo.iniciar("Imagem", 960, 540, 60)
+
+var foto = imagem("jogador.png")
+
+escreva(tipo(foto))       /* imagem */
+escreva(foto.caminho)
+escreva(foto.largura)
+escreva(foto.altura)
+
+foto.desenhe(100, 80)
+foto.desenhe(100, 80, 64, 64)
+```
+
+`largura` e `altura` são resolvidas de forma preguiçosa pelo backend. No backend gráfico real, a textura precisa poder ser carregada naquele momento.
+
+### Som
+
+```leviata
+var tiro = som("tiro.wav")
+
+tiro.volume(0.5)
+escreva(tiro.volume)
+tiro.toque()
+```
+
+O objeto preserva seu volume. O backend de áudio atual ainda utiliza volume mestre no momento da reprodução; a separação por canal/instância é uma evolução futura do backend, não da sintaxe.
+
+### Arquivo
+
+```leviata
+var dados = arquivo("dados.txt")
+
+dados.escreva("Olá")
+dados.adicione("\nOutra linha")
+
+var conteudo = dados.leia()
+escreva(conteudo)
+escreva(dados.caminho)
+```
+
+Também é válido operar diretamente sobre o retorno do construtor:
+
+```leviata
+arquivo("config.txt").escreva("modo=rapido")
+```
+
+A antiga forma `arquivo.leia("...")` foi retirada da superfície pública. `arquivo(...)` agora cria um recurso real.
+
 ## APIs especializadas
 
-APIs maiores usam nomes curtos por domínio em vez de funções globais gigantes.
+APIs grandes e sem receptor natural continuam agrupadas por domínio.
 
 ```leviata
 jogo.iniciar("Meu jogo", 960, 540, 60)
 
 var x = 100
 
- enquanto nao jogo.deve_fechar() {
+enquanto nao jogo.deve_fechar() {
     var dt = jogo.delta()
 
     se teclado.pressionada("A") {
@@ -176,7 +225,7 @@ var x = 100
 jogo.fechar()
 ```
 
-A interface pública não exige decorar códigos como `65` para A ou `32` para espaço:
+A interface pública não exige códigos numéricos de tecla:
 
 ```leviata
 teclado.pressionada("A")
@@ -234,24 +283,17 @@ entidade.atualizar(jogador, jogo.delta())
 escreva(entidade.x(jogador), entidade.y(jogador))
 ```
 
-### Áudio
+### Áudio global
+
+A API global continua útil para música e configuração geral:
 
 ```leviata
 audio.iniciar()
-audio.tocar("efeito.wav")
 audio.musica("musica.ogg")
 audio.volume(0.8)
 ```
 
-### Arquivos
-
-Entrada e saída de console usam `leia` e `escreva`. Arquivos usam um domínio explícito para não criar ambiguidade:
-
-```leviata
-var conteudo = arquivo.leia("dados.txt")
-arquivo.escreva("dados.txt", "Olá")
-arquivo.adicione("dados.txt", "\nOutra linha")
-```
+Para efeitos associados a um recurso, prefira `som("...").toque()`.
 
 ## Arquitetura
 
@@ -263,21 +305,21 @@ Lexer
 Parser / AST
    ↓
 Compilador de bytecode
+   ├─ API qualificada: camera.seguir
+   └─ objeto/método: foto.desenhe
    ↓
 VM Leviata + GC
    ↓
-Biblioteca canônica
+Biblioteca canônica + objetos nativos
    ↓
 Stdlib / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
 
-Os bindings antigos podem continuar existindo internamente em C para reutilização da implementação. A camada `leviata_canon` define a superfície pública usada pelo código `.pt`.
+Os bindings históricos continuam podendo existir internamente em C para reaproveitar a implementação. A superfície `.pt` é definida pelas camadas `leviata_canon` e `leviata_resources`.
 
 ## Compilar
-
-Build padrão sem dependência gráfica externa:
 
 ```bash
 make
@@ -306,6 +348,7 @@ make raylib
 ```bash
 ./leviata testes/nucleo.pt
 ./leviata testes/gameplay.pt
+./leviata testes/recursos.pt
 ```
 
 Build com sanitizers:
@@ -314,24 +357,7 @@ Build com sanitizers:
 make debug
 ./leviata_debug testes/nucleo.pt
 ./leviata_debug testes/gameplay.pt
+./leviata_debug testes/recursos.pt
 ```
 
-O CI executa o build, exemplos, testes de regressão e AddressSanitizer/UndefinedBehaviorSanitizer.
-
-## Exemplos
-
-- `exemplos/hello.pt`
-- `exemplos/listas.pt`
-- `exemplos/matematica.pt`
-- `exemplos/jogo.pt`
-- `exemplos/motor2d.pt`
-- `exemplos/mundo.pt`
-- `exemplos/gameplay.pt`
-
-## Especificação histórica
-
-As decisões de nomenclatura e sintaxe são registradas em:
-
-`docs/DECISOES_DA_LINGUAGEM.md`
-
-Mudanças futuras devem manter o princípio de uma forma canônica por conceito e registrar o motivo da alteração.
+O CI executa build, exemplos, regressões do núcleo/gameplay/recursos e AddressSanitizer/UndefinedBehaviorSanitizer.
