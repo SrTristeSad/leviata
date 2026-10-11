@@ -1,0 +1,17 @@
+/* Modulo base da regressao de `usar`. */
+
+var modulo_execucoes = 0
+modulo_execucoes = modulo_execucoes + 1
+
+funcao dobro(valor) {
+    retorne valor * 2
+}
+
+classe CaixaModulo {
+    var valor = 10
+
+    funcao dobrar() {
+        este.valor = este.valor * 2
+        retorne este.valor
+    }
+}
