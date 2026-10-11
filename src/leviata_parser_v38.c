@@ -13,9 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define leviata_parse leviata_parse_v36
+/* O parser 3.6 continua exportando `leviata_parse`; o runtime 3.8 chama
+ * explicitamente `leviata_parse_v38`, que prepara mapas e delega para ele. */
 #include "leviata_parser_v36.c"
-#undef leviata_parse
 
 typedef struct {
     char *data;
@@ -366,7 +366,7 @@ falha:
     return NULL;
 }
 
-AstNode *leviata_parse(const char *source, int *had_error) {
+AstNode *leviata_parse_v38(const char *source, int *had_error) {
     char *normalizado = v38_normaliza_mapas(source);
     if (!normalizado) {
         if (had_error) *had_error = 1;
@@ -374,7 +374,7 @@ AstNode *leviata_parse(const char *source, int *had_error) {
         return NULL;
     }
 
-    AstNode *ast = leviata_parse_v36(normalizado, had_error);
+    AstNode *ast = leviata_parse(normalizado, had_error);
     free(normalizado);
     return ast;
 }
