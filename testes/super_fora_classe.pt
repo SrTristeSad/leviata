@@ -1,0 +1,5 @@
+funcao teste() {
+    retorne super.alguma_coisa()
+}
+
+escreva(teste())
