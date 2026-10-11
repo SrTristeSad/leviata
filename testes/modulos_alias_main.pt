@@ -1,0 +1,34 @@
+funcao falhar(mensagem) {
+    escreva("FALHA_MOD_ALIAS:", mensagem)
+    funcao_que_nao_existe()
+}
+
+usar "modulos_alias/lib.pt" como util
+usar "./modulos_alias/../modulos_alias/lib.pt" como outra
+
+se util.dobro(5) != 10 {
+    falhar("funcao exportada pelo alias")
+}
+
+se outra.dobro(6) != 12 {
+    falhar("segundo alias do mesmo modulo")
+}
+
+se util.versao_modulo != "3.6" {
+    falhar("valor exportado pelo alias")
+}
+
+var caixa = novo util.Caixa(7)
+se tipo(caixa) != "Caixa" {
+    falhar("classe qualificada pelo alias")
+}
+se caixa.valor != 7 ou caixa.dobro() != 14 {
+    falhar("construtor de classe exportada")
+}
+
+/* Compatibilidade 3.x: o simbolo global continua existindo nesta revisao. */
+se dobro(4) != 8 {
+    falhar("compatibilidade do namespace global")
+}
+
+escreva("MOD_ALIAS_OK")
