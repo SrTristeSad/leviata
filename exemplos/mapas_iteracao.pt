@@ -1,0 +1,11 @@
+var jogador = {
+    nome: "Alex",
+    nivel: 12,
+    moedas: 350
+}
+
+para chave, valor em jogador {
+    escreva(chave, "=", valor)
+}
+
+escreva("Total de campos:", tamanho(jogador))
