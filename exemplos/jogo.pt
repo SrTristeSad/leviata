@@ -1,28 +1,28 @@
-/* Exemplo real do backend Raylib do Leviata */
+/* Exemplo Raylib com a API canônica do Leviata 3 */
 
-jogo_iniciar("Leviata + Raylib", 960, 540, 60)
+jogo.iniciar("Leviata + Raylib", 960, 540, 60)
 
 var x = 430
 var y = 240
 var velocidade = 240
 
-enquanto (nao jogo_deve_fechar()) {
-    var dt = jogo_delta()
+enquanto nao jogo.deve_fechar() {
+    var dt = jogo.delta()
 
-    se (jogo_tecla(65)) { x = x - velocidade * dt }
-    se (jogo_tecla(68)) { x = x + velocidade * dt }
-    se (jogo_tecla(87)) { y = y - velocidade * dt }
-    se (jogo_tecla(83)) { y = y + velocidade * dt }
+    se teclado.pressionada("A") { x = x - velocidade * dt }
+    se teclado.pressionada("D") { x = x + velocidade * dt }
+    se teclado.pressionada("W") { y = y - velocidade * dt }
+    se teclado.pressionada("S") { y = y + velocidade * dt }
 
-    jogo_iniciar_frame()
-    jogo_limpar_fundo(20, 24, 36)
+    jogo.quadro()
+    desenho.fundo(20, 24, 36)
 
-    jogo_desenhar_texto("Leviata rodando com Raylib", 30, 30, 28, 235, 235, 245)
-    jogo_desenhar_texto("Use W A S D para mover", 30, 70, 20, 180, 190, 210)
-    jogo_desenhar_retangulo(x, y, 70, 70, 90, 180, 255)
-    jogo_desenhar_circulo(jogo_mouse_x(), jogo_mouse_y(), 8, 255, 190, 80)
+    desenho.texto("Leviata rodando com Raylib", 30, 30, 28, 235, 235, 245)
+    desenho.texto("Use W A S D para mover", 30, 70, 20, 180, 190, 210)
+    desenho.retangulo(x, y, 70, 70, 90, 180, 255)
+    desenho.circulo(mouse.x(), mouse.y(), 8, 255, 190, 80)
 
-    jogo_finalizar_frame()
+    jogo.mostrar()
 }
 
-jogo_fechar()
+jogo.fechar()
