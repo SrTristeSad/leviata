@@ -121,6 +121,7 @@ void ast_free(AstNode *node) {
             break;
 
         case AST_NEW:
+        case AST_USE:
         default:
             break;
     }
@@ -157,6 +158,9 @@ void ast_print(AstNode *node, int indent) {
             break;
         case AST_NEW:
             printf("(novo %s)\n", node->as.new_expr.class_name);
+            break;
+        case AST_USE:
+            printf("(usar \"%s\")\n", node->as.use_stmt.path);
             break;
         case AST_FIELD:
             printf("(campo .%s)\n", node->as.field_access.field);
