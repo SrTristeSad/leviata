@@ -12,6 +12,7 @@ SRC = src/main.c \
       src/leviata_ast.c \
       src/leviata_parser_v38.c \
       src/leviata_vm.c \
+      src/leviata_compiler_v35.c \
       src/leviata_compiler_v38.c \
       src/leviata_stdlib.c \
       src/leviata_ffi.c \
@@ -22,7 +23,7 @@ SRC = src/main.c \
       src/leviata_classes.c \
       src/leviata_super.c \
       src/leviata_maps.c \
-      src/leviata_runtime_v37.c \
+      src/leviata_runtime_v38.c \
       src/leviata_canon_finalize.c
 
 RAYLIB_CFLAGS := $(shell pkg-config --cflags raylib 2>/dev/null)
