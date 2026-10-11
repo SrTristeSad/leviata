@@ -10,9 +10,9 @@ TARGET  ?= leviata
 SRC = src/main.c \
       src/leviata_lexer.c \
       src/leviata_ast.c \
-      src/leviata_parser_v36.c \
+      src/leviata_parser_v38.c \
       src/leviata_vm.c \
-      src/leviata_compiler_v35.c \
+      src/leviata_compiler_v38.c \
       src/leviata_stdlib.c \
       src/leviata_ffi.c \
       src/leviata_2d.c \
@@ -21,6 +21,7 @@ SRC = src/main.c \
       src/leviata_resources.c \
       src/leviata_classes.c \
       src/leviata_super.c \
+      src/leviata_maps.c \
       src/leviata_runtime_v37.c \
       src/leviata_canon_finalize.c
 
