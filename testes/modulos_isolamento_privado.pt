@@ -1,0 +1,4 @@
+usar "modulos_isolamento/a.pt" como a
+
+/* `segredo` pertence ao modulo A e nao pode existir no chamador. */
+escreva(segredo)
