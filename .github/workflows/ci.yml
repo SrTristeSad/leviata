@@ -39,6 +39,24 @@ jobs:
           ./leviata testes/gameplay.pt | tee /tmp/leviata-gameplay.log
           grep -q "GAMEPLAY_OK" /tmp/leviata-gameplay.log
 
+      - name: Enforce Leviata 3 canonical surface
+        run: |
+          cat > /tmp/leviata-legado.pt <<'EOF'
+          escrever("forma antiga")
+          EOF
+          if ./leviata /tmp/leviata-legado.pt; then
+            echo "ERRO: escrever() antigo voltou a ser aceito"
+            exit 1
+          fi
+
+          cat > /tmp/leviata-logica-antiga.pt <<'EOF'
+          escreva(verdadeiro && falso)
+          EOF
+          if ./leviata /tmp/leviata-logica-antiga.pt; then
+            echo "ERRO: && voltou a ser aceito como forma canônica"
+            exit 1
+          fi
+
       - name: Build with sanitizers
         run: make debug
 
