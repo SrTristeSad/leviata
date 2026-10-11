@@ -38,6 +38,16 @@ jobs:
           ./leviata testes/nucleo.pt | tee /tmp/leviata-core.log
           grep -q "NUCLEO_OK" /tmp/leviata-core.log
 
+      - name: Run map regression suite
+        run: |
+          ./leviata testes/mapas.pt | tee /tmp/leviata-maps.log
+          grep -q "MAPAS_OK" /tmp/leviata-maps.log
+
+          if ./leviata testes/mapas_chave_invalida.pt; then
+            echo "ERRO: mapa aceitou indice numerico"
+            exit 1
+          fi
+
       - name: Run gameplay regression suite
         run: |
           ./leviata testes/gameplay.pt | tee /tmp/leviata-gameplay.log
@@ -144,6 +154,7 @@ jobs:
       - name: Run regressions with sanitizers
         run: |
           ./leviata_debug testes/nucleo.pt
+          ./leviata_debug testes/mapas.pt
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
