@@ -1,0 +1,70 @@
+/* Regressão de super no Leviata 3.5. */
+
+funcao falhar(mensagem) {
+    escreva("FALHA_SUPER:", mensagem)
+    funcao_que_nao_existe()
+}
+
+classe Pessoa {
+    var nome = ""
+
+    funcao iniciar(nome) {
+        este.nome = nome
+    }
+
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
+
+    funcao nivel() {
+        retorne "Pessoa"
+    }
+}
+
+classe Funcionario herda Pessoa {
+    var cargo = ""
+
+    funcao iniciar(nome, cargo) {
+        super.iniciar(nome)
+        este.cargo = cargo
+    }
+
+    funcao saudacao() {
+        retorne super.saudacao() + " / " + este.cargo
+    }
+
+    funcao nivel() {
+        retorne super.nivel() + ">Funcionario"
+    }
+}
+
+classe Lider herda Funcionario {
+    funcao nivel() {
+        retorne super.nivel() + ">Lider"
+    }
+}
+
+var dev = novo Funcionario("Leo", "dev")
+
+se dev.nome != "Leo" {
+    falhar("super.iniciar nao inicializou o campo herdado")
+}
+se dev.cargo != "dev" {
+    falhar("construtor filho perdeu campo proprio")
+}
+se dev.saudacao() != "Oi Leo / dev" {
+    falhar("super em metodo sobrescrito")
+}
+se dev.nivel() != "Pessoa>Funcionario" {
+    falhar("lookup de super deve iniciar no pai")
+}
+
+var chefe = novo Lider()
+chefe.nome = "Ana"
+chefe.cargo = "lider"
+
+se chefe.nivel() != "Pessoa>Funcionario>Lider" {
+    falhar("cadeia de super em tres niveis")
+}
+
+escreva("SUPER_OK")
