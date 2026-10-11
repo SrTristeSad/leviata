@@ -1,5 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA v2.1
+ * MOTOR LEVIATA v2.2
  * Linguagem PT - launcher, REPL e execucao de arquivos .pt
  * ============================================================================ */
 #include <stdio.h>
@@ -12,13 +12,14 @@
 #include "leviata_compiler.h"
 #include "leviata_stdlib.h"
 #include "leviata_ffi.h"
+#include "leviata_2d.h"
 
 AstNode *leviata_parse(const char *source, int *had_error);
 
 static void print_banner(void) {
     printf("╔══════════════════════════════════════════════════════╗\n");
-    printf("║       MOTOR LEVIATA v2.1 — Linguagem PT             ║\n");
-    printf("║ Lexer | Parser | Bytecode VM | GC | FFI | Raylib    ║\n");
+    printf("║       MOTOR LEVIATA v2.2 — Linguagem PT             ║\n");
+    printf("║ VM | GC | FFI | Raylib | Camera | Tilemap | Cenas  ║\n");
     printf("╚══════════════════════════════════════════════════════╝\n\n");
 }
 
@@ -111,7 +112,7 @@ static void run_repl(LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Motor Leviata\"\n"
-    "var versao = 2.1\n"
+    "var versao = 2.2\n"
     "escrever(\"Sistema:\", nome, \"v\" + para_texto(versao))\n"
     "escrever(\"Raiz de 144 =\", raiz(144))\n"
     "var notas = [8, 9, 7, 10]\n"
@@ -120,7 +121,9 @@ static const char *DEMO_PROGRAMA =
     "var soma = 0\n"
     "para n de 1 ate 5 { soma = soma + n }\n"
     "escrever(\"Soma de 1 ate 5 =\", soma)\n"
-    "escrever(\"FFI de jogos registrada. Rode exemplos/jogo.pt com make raylib.\")\n";
+    "cena_mudar(\"demo\")\n"
+    "escrever(\"Motor 2D ativo. Cena:\", cena_atual())\n"
+    "escrever(\"Colisao AABB:\", jogo_colisao_retangulos(0, 0, 10, 10, 5, 5, 10, 10))\n";
 
 static void run_demo(LvVM *vm) {
     printf("=== DEMONSTRACAO LEVIATA ===\n\n");
@@ -156,6 +159,7 @@ int main(int argc, char *argv[]) {
 
     stdlib_register_all(&vm);
     ffi_register_runtime(&vm);
+    leviata_2d_register_runtime(&vm);
 
     int exit_code = 0;
 
@@ -192,6 +196,7 @@ int main(int argc, char *argv[]) {
         exit_code = 1;
     }
 
+    leviata_2d_shutdown();
     game_close();
     vm_free(&vm);
     return exit_code;
