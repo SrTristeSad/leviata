@@ -106,9 +106,9 @@ static const char *DEMO_PROGRAMA =
     "lista_adicionar(notas, 9)\n"
     "escrever(\"Itens na lista:\", tamanho(notas))\n"
     "cena_mudar(\"demo\")\n"
-    "var e = entidade_criar(\"demo\", 10, 20, 32, 32)\n"
-    "entidade_fisica(e, 980, 2)\n"
-    "escrever(\"Entidade:\", entidade_nome(e), \" componentes fisica=\", entidade_tem_componente(e, \"fisica\"))\n"
+    "var entidade_demo = entidade_criar(\"demo\", 10, 20, 32, 32)\n"
+    "entidade_fisica(entidade_demo, 980, 2)\n"
+    "escrever(\"Entidade:\", entidade_nome(entidade_demo), \" componentes fisica=\", entidade_tem_componente(entidade_demo, \"fisica\"))\n"
     "escrever(\"Motor 2D/World ativo. Cena:\", cena_atual())\n";
 
 static void run_demo(LvVM *vm) {
