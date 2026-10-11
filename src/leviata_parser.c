@@ -429,6 +429,17 @@ static AstNode *parse_class_decl(Parser *p) {
     return n;
 }
 
+static AstNode *parse_use(Parser *p) {
+    int line = p->prev.line;
+    Token path = expect(p, TOK_STR_LIT,
+                        "Esperado caminho entre aspas após 'usar'");
+    AstNode *n = ast_alloc(AST_USE, line);
+    strncpy(n->as.use_stmt.path, path.lexeme, LV_MAX_STRING - 1);
+    n->as.use_stmt.path[LV_MAX_STRING - 1] = '\0';
+    match(p, TOK_SEMICOLON);
+    return n;
+}
+
 static AstNode *parse_if(Parser *p) {
     int line = p->prev.line;
     AstNode *n = ast_alloc(AST_IF, line);
@@ -534,6 +545,7 @@ static AstNode *parse_stmt(Parser *p) {
 
     if (match(p, TOK_VAR)) return parse_var_decl(p, 0);
     if (match(p, TOK_CONST_KW)) return parse_var_decl(p, 1);
+    if (match(p, TOK_IMPORTAR)) return parse_use(p);
     if (match(p, TOK_CLASSE)) return parse_class_decl(p);
     if (match(p, TOK_FUNC)) return parse_func_decl(p);
     if (match(p, TOK_SE)) return parse_if(p);
