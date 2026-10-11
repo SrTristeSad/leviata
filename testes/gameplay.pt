@@ -1,0 +1,61 @@
+/* Regressão da camada World/GamePlay. */
+
+funcao falhar(mensagem) {
+    escrever("FALHA_GAMEPLAY:", mensagem)
+    funcao_que_nao_existe()
+}
+
+var jogador = entidade_criar("jogador_teste", 0, 0, 16, 16)
+var porta = entidade_criar("porta_teste", 8, 0, 16, 16)
+
+se (jogador == 0 ou porta == 0) {
+    falhar("criacao de entidade")
+}
+
+se (entidade_buscar("jogador_teste") != jogador) {
+    falhar("busca por nome")
+}
+
+entidade_gatilho(porta, verdadeiro)
+se (nao entidade_tem_componente(porta, "gatilho")) {
+    falhar("componente gatilho")
+}
+
+se (nao entidade_colide(jogador, porta)) {
+    falhar("colisao entidade-entidade")
+}
+
+entidade_posicionar(porta, 100, 0)
+se (entidade_colide(jogador, porta)) {
+    falhar("colisao falsa positiva")
+}
+
+var distancia = entidade_distancia(jogador, porta)
+se (distancia != 100) {
+    falhar("distancia entre centros")
+}
+
+entidade_tamanho(jogador, 32, 24)
+se (entidade_x(jogador) != 0 ou entidade_y(jogador) != 0) {
+    falhar("redimensionamento alterou posicao")
+}
+
+var suave = jogo_camera_suavidade(8)
+se (suave != 8) {
+    falhar("configuracao de camera suave")
+}
+
+jogo_camera_seguir(200, 100)
+jogo_camera_suavidade(0)
+jogo_camera_seguir(50, 25)
+
+se (entidade_quantidade() < 2) {
+    falhar("contagem de entidades")
+}
+
+entidade_destruir(porta)
+se (entidade_buscar("porta_teste") != 0) {
+    falhar("destruicao de entidade")
+}
+
+escrever("GAMEPLAY_OK")
