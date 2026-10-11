@@ -1,0 +1,119 @@
+/* Regressão de classes, instâncias, este e herança do Leviata 3.2. */
+
+funcao falhar(mensagem) {
+    escreva("FALHA_CLASSES:", mensagem)
+    funcao_que_nao_existe()
+}
+
+classe Pessoa {
+    var nome = "sem nome"
+    var contador = 0
+    var tags = []
+
+    funcao definir_nome(valor) {
+        este.nome = valor
+    }
+
+    funcao incrementar() {
+        este.contador += 1
+        retorne este.contador
+    }
+
+    funcao adicionar_tag(valor) {
+        adicionar(este.tags, valor)
+    }
+
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
+
+    funcao saudacao_indireta() {
+        retorne este.saudacao()
+    }
+}
+
+se tipo(Pessoa) != "classe" {
+    falhar("tipo da classe")
+}
+
+var ana = novo Pessoa()
+var bia = novo Pessoa()
+
+se tipo(ana) != "Pessoa" {
+    falhar("tipo da instancia")
+}
+
+ana.definir_nome("Ana")
+bia.definir_nome("Bia")
+
+se ana.nome != "Ana" ou bia.nome != "Bia" {
+    falhar("campos independentes")
+}
+
+ana.adicionar_tag("azul")
+se tamanho(ana.tags) != 1 {
+    falhar("lista da primeira instancia")
+}
+se tamanho(bia.tags) != 0 {
+    falhar("lista padrao foi compartilhada entre instancias")
+}
+
+se ana.incrementar() != 1 ou ana.incrementar() != 2 {
+    falhar("atribuicao composta em campo")
+}
+se bia.incrementar() != 1 {
+    falhar("contador independente")
+}
+
+se ana.saudacao() != "Oi Ana" {
+    falhar("metodo com leitura de campo")
+}
+se ana.saudacao_indireta() != "Oi Ana" {
+    falhar("metodo chamando metodo por este")
+}
+
+/* Campo também pode ser alterado diretamente por código cliente. */
+bia.nome = "Beatriz"
+se bia.saudacao() != "Oi Beatriz" {
+    falhar("atribuicao externa de campo")
+}
+
+classe Funcionario herda Pessoa {
+    var cargo = "dev"
+
+    funcao descricao() {
+        retorne este.nome + ":" + este.cargo
+    }
+
+    funcao saudacao() {
+        retorne "Trabalho: " + este.nome
+    }
+}
+
+var leo = novo Funcionario()
+leo.definir_nome("Leo")
+
+se tipo(leo) != "Funcionario" {
+    falhar("tipo de instancia herdada")
+}
+if_falso_inexistente = nulo
+
+se leo.nome != "Leo" {
+    falhar("campo herdado")
+}
+se leo.cargo != "dev" {
+    falhar("campo da classe filha")
+}
+se leo.descricao() != "Leo:dev" {
+    falhar("metodo da classe filha")
+}
+se leo.saudacao() != "Trabalho: Leo" {
+    falhar("sobrescrita de metodo")
+}
+
+/* Método herdado continua disponível e usa a instância filha como este. */
+se leo.incrementar() != 1 {
+    falhar("metodo herdado")
+}
+
+escreva("CLASSES_OK")
