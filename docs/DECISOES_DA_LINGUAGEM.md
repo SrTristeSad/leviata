@@ -6,7 +6,7 @@
 
 **Criado:** 11 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.7  
+**Versão implementada:** Leviata 3.8  
 
 ---
 
@@ -14,7 +14,7 @@
 
 Leviata é uma linguagem própria escrita em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
 
-Conceitos como condição, função, classe, módulo e herança são universais. O paralelo em inglês serve apenas para identificar o conceito correspondente.
+Conceitos como condição, função, classe, módulo, mapa e herança são universais. O paralelo em inglês serve apenas para identificar o conceito correspondente.
 
 Regra central:
 
@@ -79,6 +79,7 @@ Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, too
 | E lógico | `and`, `&&` | `e` |
 | OU lógico | `or`, `||` | `ou` |
 | negação | `not`, `!` | `nao` |
+| mapa/dicionário | `map`, `dict`, object literal | `mapa`, `{ chave: valor }` |
 | classe | `class` | `classe` |
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
@@ -110,6 +111,7 @@ str / String   -> txt
 int            -> int
 float / double -> dec
 bool / Boolean -> bool
+map / dict     -> mapa
 ```
 
 ```leviata
@@ -117,6 +119,7 @@ var a = txt(123)
 var b = int("42")
 var c = dec("3.14")
 var d = bool(1)
+var e = mapa()
 ```
 
 `tipo(valor)` usa nomes canônicos do Leviata.
@@ -497,14 +500,99 @@ Essa estratégia produz isolamento real para o programador sem duplicar a VM nem
 
 ---
 
-# 16. O ponto (`.`)
+# 16. Mapas — 3.8
+
+O conceito paralelo é `map`, `dictionary` ou estrutura chave/valor. A forma canônica da linguagem é **mapa**.
+
+Literal:
+
+```leviata
+var pessoa = {
+    nome: "Alex",
+    idade: 29,
+    endereco: {
+        cidade: "Salvador"
+    }
+}
+```
+
+Acesso:
+
+```leviata
+pessoa.nome
+pessoa["idade"]
+pessoa.endereco.cidade
+```
+
+Mutação:
+
+```leviata
+pessoa.idade = 30
+pessoa["idade"] += 2
+pessoa["online"] = verdadeiro
+```
+
+Operações:
+
+```leviata
+tamanho(pessoa)
+contem(pessoa, "online")
+chaves(pessoa)
+valores(pessoa)
+remover(pessoa, "online")
+limpar(pessoa)
+```
+
+Decisões:
+
+- chaves públicas são textos;
+- `{}` é mapa vazio;
+- `mapa()` também cria mapa vazio e serve como construtor funcional;
+- `{ nome: valor }` converte a chave identificadora para o texto `"nome"`;
+- chave que não é identificador simples usa a forma textual, por exemplo `{ "nome-completo": valor }`;
+- `mapa.nome` e `mapa["nome"]` acessam a mesma entrada;
+- atribuição por ponto ou índice cria a entrada quando ela ainda não existe;
+- `+=`, `-=`, `*=` e `/=` usam a mesma indexação genérica usada por listas;
+- chave ausente lida por acesso retorna `nulo`;
+- índice de lista continua numérico; chave de mapa é textual;
+- `bool(mapa)` é falso quando vazio e verdadeiro quando não vazio;
+- nomes iniciados por `@` são reservados ao runtime e não podem ser usados como chaves públicas;
+- `chaves` e `valores` retornam listas;
+- operações já existentes (`tamanho`, `contem`, `remover`, `limpar`) foram estendidas em vez de criar nomes redundantes como `mapa_tamanho` ou `mapa_remover`.
+
+A palavra `mapa` também já aparece no domínio gráfico como `mapa.carregar(...)`. Isso não cria uma segunda estrutura de dados. O contexto diferencia:
+
+```leviata
+var dados = mapa()              /* coleção chave/valor */
+var mundo = mapa.carregar(...)  /* API de tilemap do motor */
+```
+
+Não foi criado `dicionario` apenas para fugir dessa sobreposição, porque isso aumentaria o vocabulário sem ganho semântico real.
+
+## Implementação escolhida
+
+`LV_TYPE_MAP` já existia para classes e instâncias. O 3.8 reutiliza o mesmo tipo físico, distinguindo mapas públicos das estruturas internas marcadas como classe/instância.
+
+A indexação deixa de ser conceitualmente exclusiva de listas. Antes do compilador 3.5, a camada 3.8 transforma operações de índice em despachos internos genéricos:
+
+```text
+colecao[indice]       -> @indice.obter(...)
+colecao[indice] = x   -> @indice.definir(...)
+colecao[indice] += x  -> @indice.composto(...)
+```
+
+Esses nomes internos não pertencem à linguagem pública.
+
+---
+
+# 17. O ponto (`.`)
 
 O ponto possui usos consistentes:
 
 ```leviata
 camera.seguir(x, y)      /* API estática */
 foto.desenhe(x, y)       /* método de objeto */
-pessoa.nome              /* campo */
+pessoa.nome              /* campo de instância ou chave de mapa */
 util.dobro(5)            /* exportação de módulo */
 novo util.Caixa(10)      /* classe exportada */
 ```
@@ -513,9 +601,9 @@ O compilador resolve nomes qualificados conhecidos antes do acesso dinâmico a m
 
 ---
 
-# 17. Modelo interno
+# 18. Modelo interno
 
-Recursos nativos usam `LV_TYPE_OBJECT`. Classes e instâncias usam `LV_TYPE_MAP`, rastreado pelo GC.
+Recursos nativos usam `LV_TYPE_OBJECT`. Classes, instâncias e mapas de usuário usam `LV_TYPE_MAP`, rastreado pelo GC.
 
 Chaves internas de classe começam com `@`:
 
@@ -535,6 +623,14 @@ Módulos adicionam chaves internas do linker:
 @m<modulo>:c<classe>
 ```
 
+A indexação genérica 3.8 usa handlers internos:
+
+```text
+@indice.obter
+@indice.definir
+@indice.composto
+```
+
 O runtime mantém:
 
 - caminhos já carregados;
@@ -547,7 +643,7 @@ Marcadores internos usados pelo front-end são consumidos antes da compilação 
 
 ---
 
-# 18. Implementação versus superfície pública
+# 19. Implementação versus superfície pública
 
 Nome interno não é especificação da linguagem.
 
@@ -556,6 +652,7 @@ Internamente podem existir:
 ```text
 jogo_desenhar_retangulo
 @classe.super_metodo
+@indice.obter
 __leviata_exportar
 __leviata_alias_import
 @m2:4
@@ -566,13 +663,14 @@ Publicamente:
 ```leviata
 desenho.retangulo(...)
 super.metodo(...)
+var dados = { nome: "Alex" }
 exportar funcao nome(...) { ... }
 usar "arquivo.pt" como modulo
 ```
 
 ---
 
-# 19. Política de mudanças futuras
+# 20. Política de mudanças futuras
 
 Toda mudança pública deve responder:
 
@@ -587,7 +685,7 @@ Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 ---
 
-# 20. Registro histórico
+# 21. Registro histórico
 
 ## 10 de outubro de 2026 — Definição inicial do vocabulário
 
@@ -668,11 +766,35 @@ O primeiro teste de import aninhado revelou que o compilador classificava `orige
 
 A suíte completa voltou a passar com AddressSanitizer e UndefinedBehaviorSanitizer.
 
+## 11 de outubro de 2026 — Leviata 3.8
+
+Mapas/dicionários passaram a ser uma coleção pública da linguagem:
+
+```leviata
+var perfil = {
+    nome: "Alex",
+    idade: 29
+}
+
+perfil.idade += 1
+perfil["online"] = verdadeiro
+```
+
+A decisão principal foi **não criar uma biblioteca paralela cheia de `mapa_*`**. As operações de coleção já existentes foram generalizadas e apenas `chaves` e `valores` foram acrescentadas onde o conceito realmente é específico.
+
+Também foi generalizada a indexação do compilador: listas continuam usando índice numérico e mapas usam chave textual pela mesma sintaxe `[]`.
+
+A implementação inicial dos wrappers 3.8 revelou uma colisão de símbolos ao tentar envolver diretamente os arquivos 3.6/3.5, que já faziam sua própria composição por macros. A arquitetura foi corrigida sem copiar parser ou compilador: o 3.8 ganhou entradas próprias `leviata_parse_v38` e `compiler_compile_program_v38`, enquanto o runtime 3.8 redireciona apenas essas entradas e delega às camadas maduras anteriores.
+
+Foram adicionadas regressões para literal, mapa aninhado, acesso por ponto/colchetes, criação e atualização de chaves, atribuição composta, `chaves`, `valores`, `tamanho`, `contem`, `remover`, `limpar`, mapa vazio, conversão booleana, chave inválida e compatibilidade da indexação de listas.
+
+A suíte completa passou com AddressSanitizer e UndefinedBehaviorSanitizer.
+
 ---
 
-# 21. Estado canônico atual
+# 22. Estado canônico atual
 
-A referência implementada é **Leviata 3.7**.
+A referência implementada é **Leviata 3.8**.
 
 Recursos públicos consolidados:
 
@@ -683,6 +805,10 @@ funcao / retorne
 pare / continue
 verdadeiro / falso / nulo
 e / ou / nao
+lista
+mapa / { chave: valor }
+tamanho / contem / adicionar / inserir / remover / limpar
+chaves / valores
 classe / novo / este / herda / super
 iniciar como construtor
 usar
