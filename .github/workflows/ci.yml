@@ -45,6 +45,11 @@ jobs:
           grep -q "RECURSOS_OK" /tmp/leviata-resources.log
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
 
+      - name: Run class regression suite
+        run: |
+          ./leviata testes/classes.pt | tee /tmp/leviata-classes.log
+          grep -q "CLASSES_OK" /tmp/leviata-classes.log
+
       - name: Enforce Leviata 3 canonical surface
         run: |
           cat > /tmp/leviata-legado.pt <<'EOF'
@@ -71,4 +76,5 @@ jobs:
           ./leviata_debug testes/nucleo.pt
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
+          ./leviata_debug testes/classes.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
