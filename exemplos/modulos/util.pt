@@ -1,0 +1,13 @@
+funcao saudacao_modulo(nome) {
+    retorne "Ola, " + nome
+}
+
+classe PontoModulo {
+    var x = 0
+    var y = 0
+
+    funcao mover(dx, dy) {
+        este.x = este.x + dx
+        este.y = este.y + dy
+    }
+}
