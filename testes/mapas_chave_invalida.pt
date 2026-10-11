@@ -1,0 +1,3 @@
+var dados = { nome: "Alex" }
+/* Mapas usam chave textual; indice numerico deve falhar. */
+escreva(dados[0])
