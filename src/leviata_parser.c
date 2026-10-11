@@ -32,7 +32,8 @@ static Token advance(Parser *p) {
     p->current = lexer_next(p->lex);
     if (p->current.type == TOK_ERROR) {
         char msg[256];
-        snprintf(msg, sizeof(msg), "Símbolo não aceito na sintaxe canônica: '%s'",
+        snprintf(msg, sizeof(msg),
+                 "Símbolo não aceito na sintaxe canônica: '%.160s'",
                  p->current.lexeme);
         parser_error(p, msg);
     }
@@ -144,6 +145,29 @@ static AstNode *parse_primary(Parser *p) {
 
     if (match(p, TOK_NULL))
         return ast_alloc(AST_NULL_LIT, tok.line);
+
+    if (match(p, TOK_ESTE)) {
+        AstNode *n = ast_alloc(AST_IDENT, tok.line);
+        strcpy(n->as.ident.name, "este");
+        return n;
+    }
+
+    if (match(p, TOK_NOVO)) {
+        AstNode *n = ast_alloc(AST_NEW, tok.line);
+        Token classe = expect(p, TOK_IDENT, "Esperado nome da classe após 'novo'");
+        strncpy(n->as.new_expr.class_name, classe.lexeme, LV_MAX_IDENTIFIER - 1);
+        n->as.new_expr.class_name[LV_MAX_IDENTIFIER - 1] = '\0';
+
+        expect(p, TOK_LPAREN, "Esperado '(' após nome da classe");
+        if (!check(p, TOK_RPAREN)) {
+            parser_error(p,
+                "Construtores com argumentos ainda não fazem parte do Leviata 3.2");
+            while (!check(p, TOK_RPAREN) && !check(p, TOK_EOF))
+                advance(p);
+        }
+        expect(p, TOK_RPAREN, "Esperado ')' após 'novo Classe('");
+        return n;
+    }
 
     if (match(p, TOK_LBRACKET)) {
         AstNode *n = ast_alloc(AST_LIST_LIT, tok.line);
@@ -342,6 +366,69 @@ static AstNode *parse_func_decl(Parser *p) {
     return n;
 }
 
+static void class_add_member(Parser *p, AstNode *classe, AstNode *member,
+                             int *cap) {
+    (void)p;
+    if (classe->as.class_decl.member_count >= *cap) {
+        *cap *= 2;
+        classe->as.class_decl.members = (AstNode**)realloc(
+            classe->as.class_decl.members,
+            (size_t)(*cap) * sizeof(AstNode*));
+    }
+    classe->as.class_decl.members[classe->as.class_decl.member_count++] = member;
+}
+
+static AstNode *parse_class_decl(Parser *p) {
+    int line = p->prev.line;
+    Token name = expect(p, TOK_IDENT, "Esperado nome da classe");
+
+    AstNode *n = ast_alloc(AST_CLASS_DECL, line);
+    strncpy(n->as.class_decl.name, name.lexeme, LV_MAX_IDENTIFIER - 1);
+    n->as.class_decl.name[LV_MAX_IDENTIFIER - 1] = '\0';
+    n->as.class_decl.has_parent = 0;
+    n->as.class_decl.parent[0] = '\0';
+
+    if (match(p, TOK_HERDAR)) {
+        Token parent = expect(p, TOK_IDENT, "Esperado classe pai após 'herda'");
+        strncpy(n->as.class_decl.parent, parent.lexeme, LV_MAX_IDENTIFIER - 1);
+        n->as.class_decl.parent[LV_MAX_IDENTIFIER - 1] = '\0';
+        n->as.class_decl.has_parent = 1;
+    }
+
+    expect(p, TOK_LBRACE, "Esperado '{' após declaração da classe");
+
+    int cap = 8;
+    n->as.class_decl.members = (AstNode**)malloc((size_t)cap * sizeof(AstNode*));
+    n->as.class_decl.member_count = 0;
+
+    while (!check(p, TOK_RBRACE) && !check(p, TOK_EOF)) {
+        if (match(p, TOK_VAR)) {
+            class_add_member(p, n, parse_var_decl(p, 0), &cap);
+            continue;
+        }
+        if (match(p, TOK_CONST_KW)) {
+            class_add_member(p, n, parse_var_decl(p, 1), &cap);
+            continue;
+        }
+        if (match(p, TOK_FUNC)) {
+            class_add_member(p, n, parse_func_decl(p), &cap);
+            continue;
+        }
+
+        parser_error(p, "Dentro de classe use 'var', 'const' ou 'funcao'");
+        if (!check(p, TOK_EOF)) advance(p);
+        while (!check(p, TOK_RBRACE) && !check(p, TOK_VAR) &&
+               !check(p, TOK_CONST_KW) && !check(p, TOK_FUNC) &&
+               !check(p, TOK_EOF)) {
+            advance(p);
+        }
+        p->panic_mode = 0;
+    }
+
+    expect(p, TOK_RBRACE, "Esperado '}' para fechar classe");
+    return n;
+}
+
 static AstNode *parse_if(Parser *p) {
     int line = p->prev.line;
     AstNode *n = ast_alloc(AST_IF, line);
@@ -447,6 +534,7 @@ static AstNode *parse_stmt(Parser *p) {
 
     if (match(p, TOK_VAR)) return parse_var_decl(p, 0);
     if (match(p, TOK_CONST_KW)) return parse_var_decl(p, 1);
+    if (match(p, TOK_CLASSE)) return parse_class_decl(p);
     if (match(p, TOK_FUNC)) return parse_func_decl(p);
     if (match(p, TOK_SE)) return parse_if(p);
     if (match(p, TOK_ENQUANTO)) return parse_while(p);
