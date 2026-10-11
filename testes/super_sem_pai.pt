@@ -1,0 +1,8 @@
+classe Sozinha {
+    funcao teste() {
+        retorne super.teste()
+    }
+}
+
+var x = novo Sozinha()
+escreva(x.teste())
