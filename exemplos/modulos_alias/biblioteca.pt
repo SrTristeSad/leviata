@@ -1,0 +1,22 @@
+/* Módulo com API pública explícita. */
+
+exportar const nome_biblioteca = "Ferramentas"
+
+exportar funcao dobro(valor) {
+    retorne valor * 2
+}
+
+exportar classe Caixa {
+    var valor = 0
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
+
+    funcao mostrar() {
+        retorne "Caixa: " + txt(este.valor)
+    }
+}
+
+/* Continua interno ao alias porque não foi exportado. */
+var segredo_interno = 123
