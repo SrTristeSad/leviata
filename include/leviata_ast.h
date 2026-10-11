@@ -36,6 +36,7 @@ typedef enum {
     AST_CONST_DECL,
     AST_FUNC_DECL,
     AST_CLASS_DECL,
+    AST_USE,
     AST_RETURN,
 
     /* Controle de fluxo */
@@ -108,6 +109,10 @@ typedef struct AstNode {
             struct AstNode **members;
             int member_count;
         } class_decl;
+
+        struct {
+            char path[LV_MAX_STRING];
+        } use_stmt;
 
         struct { struct AstNode *value; } ret;
 
