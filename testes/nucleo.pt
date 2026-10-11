@@ -100,6 +100,7 @@ se (dados[2] != 77) {
 
 /* Atribuição composta em índice também depende da ordem correta da stack. */
 dados[0] += 5
+escrever("COMPOSTO_VALOR", dados[0])
 se (dados[0] != 15) {
     falhar("atribuicao composta em indice")
 }
