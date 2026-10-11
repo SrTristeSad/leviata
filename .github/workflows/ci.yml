@@ -1,0 +1,27 @@
+name: Leviata CI
+
+on:
+  push:
+    branches: [main, feature/raylib-backend]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Leviata
+        run: make
+
+      - name: Run internal demo
+        run: ./leviata --demo
+
+      - name: Run language examples
+        run: |
+          ./leviata exemplos/hello.pt
+          ./leviata exemplos/listas.pt
+          ./leviata exemplos/matematica.pt
+          ./leviata exemplos/jogo.pt
