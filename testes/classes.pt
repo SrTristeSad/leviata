@@ -96,7 +96,6 @@ leo.definir_nome("Leo")
 se tipo(leo) != "Funcionario" {
     falhar("tipo de instancia herdada")
 }
-if_falso_inexistente = nulo
 
 se leo.nome != "Leo" {
     falhar("campo herdado")
