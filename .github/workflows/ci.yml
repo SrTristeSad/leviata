@@ -23,6 +23,7 @@ jobs:
         run: |
           ./leviata exemplos/hello.pt
           ./leviata exemplos/listas.pt
+          ./leviata exemplos/mapas.pt
           ./leviata exemplos/matematica.pt
           ./leviata exemplos/classes.pt
           ./leviata exemplos/construtores.pt
