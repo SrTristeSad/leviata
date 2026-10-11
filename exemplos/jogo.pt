@@ -1,25 +1,28 @@
-/* Exemplo de Motor de Jogos */
-escrever("=== MOTOR DE JOGOS ===")
+/* Exemplo real do backend Raylib do Leviata */
 
-jogo_iniciar("Meu Jogo PT", 1280, 720, 60)
+jogo_iniciar("Leviata + Raylib", 960, 540, 60)
 
-/* Simula um frame do game loop */
-jogo_iniciar_frame()
-jogo_limpar_fundo(20, 20, 40)
-jogo_desenhar_sprite("jogador.png", 640, 360)
-jogo_desenhar_sprite("inimigo.png", 200, 300)
+var x = 430
+var y = 240
+var velocidade = 240
 
-var tiro = jogo_tecla(32)
-se (tiro) {
-    escrever("Espaço pressionado - ATIRAR!")
+enquanto (nao jogo_deve_fechar()) {
+    var dt = jogo_delta()
+
+    se (jogo_tecla(65)) { x = x - velocidade * dt }
+    se (jogo_tecla(68)) { x = x + velocidade * dt }
+    se (jogo_tecla(87)) { y = y - velocidade * dt }
+    se (jogo_tecla(83)) { y = y + velocidade * dt }
+
+    jogo_iniciar_frame()
+    jogo_limpar_fundo(20, 24, 36)
+
+    jogo_desenhar_texto("Leviata rodando com Raylib", 30, 30, 28, 235, 235, 245)
+    jogo_desenhar_texto("Use W A S D para mover", 30, 70, 20, 180, 190, 210)
+    jogo_desenhar_retangulo(x, y, 70, 70, 90, 180, 255)
+    jogo_desenhar_circulo(jogo_mouse_x(), jogo_mouse_y(), 8, 255, 190, 80)
+
+    jogo_finalizar_frame()
 }
 
-var mx = jogo_mouse_x()
-var my = jogo_mouse_y()
-escrever("Mouse em:", mx, my)
-
-var dt = jogo_delta()
-escrever("Delta time:", dt, "segundos")
-
-jogo_finalizar_frame()
 jogo_fechar()
