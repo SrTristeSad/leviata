@@ -55,9 +55,9 @@ static int v34_ident(char c) {
     return isalnum((unsigned char)c) || c == '_';
 }
 
-static int v34_limite_palavra(const char *s, size_t i, size_t n) {
+static int v34_limite_palavra(const char *s, size_t total, size_t i, size_t tam) {
     if (i > 0 && v34_ident(s[i - 1])) return 0;
-    if (i + n < strlen(s) && v34_ident(s[i + n])) return 0;
+    if (i + tam < total && v34_ident(s[i + tam])) return 0;
     return 1;
 }
 
@@ -95,11 +95,13 @@ static char *v34_normaliza_novo(const char *src) {
         }
 
         if (estado == COMENT_BLOCO) {
-            if (!v34_char(&out, c)) goto falha;
-            if (c == '*' && i < n && src[i] == '/') {
-                if (!v34_char(&out, src[i])) goto falha;
-                i++;
+            if (c == '*' && i + 1 < n && src[i + 1] == '/') {
+                if (!v34_txt(&out, src + i, 2)) goto falha;
+                i += 2;
                 estado = NORMAL;
+            } else {
+                if (!v34_char(&out, c)) goto falha;
+                i++;
             }
             continue;
         }
@@ -130,7 +132,7 @@ static char *v34_normaliza_novo(const char *src) {
         }
 
         if (i + 4 <= n && strncmp(src + i, "novo", 4) == 0 &&
-            v34_limite_palavra(src, i, 4)) {
+            v34_limite_palavra(src, n, i, 4)) {
             size_t ws1_ini = i + 4;
             size_t j = ws1_ini;
             while (j < n && isspace((unsigned char)src[j])) j++;
@@ -173,9 +175,8 @@ static char *v34_normaliza_novo(const char *src) {
         i++;
     }
 
-    if (!out.data) {
+    if (!out.data)
         out.data = (char*)calloc(1, 1);
-    }
     return out.data;
 
 falha:
