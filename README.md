@@ -2,7 +2,7 @@
 
 Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, FFI nativa e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.1**.
+A versão atual é **Leviata 3.2**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -43,6 +43,10 @@ se idade >= 18 {
 | OU lógico | `or`, `||` | `ou` |
 | negação | `not`, `!` | `nao` |
 | função | `function`, `def`, `fn` | `funcao` |
+| classe | `class` | `classe` |
+| nova instância | `new` | `novo` |
+| objeto atual | `this`, `self` | `este` |
+| herança | `extends`, `inherit` | `herda` |
 
 As formas antigas como `retornar`, `quebrar`, `continuar`, `importar`, `herdar`, `escrever()` e os operadores `&&`/`||` não pertencem à superfície canônica do Leviata 3.
 
@@ -85,6 +89,84 @@ funcao soma(a, b) {
 escreva(soma(5, 3))
 ```
 
+## Classes — 3.2
+
+Classes são declaradas no escopo principal. Campos recebem seus valores padrão na declaração e cada instância recebe seu próprio estado.
+
+```leviata
+classe Pessoa {
+    var nome = "sem nome"
+    var tags = []
+
+    funcao nomear(valor) {
+        este.nome = valor
+    }
+
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
+}
+
+var ana = novo Pessoa()
+ana.nomear("Ana")
+
+escreva(ana.nome)
+escreva(ana.saudacao())
+escreva(tipo(ana))   /* Pessoa */
+```
+
+`este` é o objeto que recebeu a chamada do método. Ele pode ler e alterar campos e também chamar outros métodos:
+
+```leviata
+classe Contador {
+    var valor = 0
+
+    funcao subir() {
+        este.valor += 1
+        retorne este.valor
+    }
+
+    funcao subir_duas() {
+        este.subir()
+        retorne este.subir()
+    }
+}
+```
+
+Listas usadas como valor padrão são clonadas por instância, evitando que dois objetos compartilhem acidentalmente a mesma lista.
+
+### Herança
+
+```leviata
+classe Animal {
+    var nome = "sem nome"
+
+    funcao nomear(valor) {
+        este.nome = valor
+    }
+
+    funcao falar() {
+        retorne este.nome + " fez um som"
+    }
+}
+
+classe Gato herda Animal {
+    var vidas = 7
+
+    funcao falar() {
+        retorne este.nome + " disse miau"
+    }
+}
+
+var gato = novo Gato()
+gato.nomear("Baltazar")
+escreva(gato.falar())
+```
+
+A classe filha herda campos e métodos. Um método definido novamente na filha substitui o método herdado.
+
+Nesta primeira versão, `novo Classe()` não recebe argumentos de construtor. Inicialização personalizada é feita por campos padrão e métodos. Classes locais/aninhadas também não fazem parte do 3.2.
+
 ## Tipos e conversões
 
 ```leviata
@@ -95,7 +177,7 @@ bool(1)
 tipo("Leviata")
 ```
 
-`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo` e `nulo`.
+`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo`, `classe` e, para uma instância, o nome de sua classe.
 
 ## Listas
 
@@ -140,14 +222,14 @@ aleatorio_int(1, 100)
 pi
 ```
 
-## Objetos nativos — 3.1
+## Objetos nativos — 3.1+
 
-O ponto agora possui dois significados definidos pelo compilador:
+O ponto possui dois significados definidos pelo compilador:
 
 - API estática: `camera.seguir(...)`, `jogo.iniciar(...)`;
-- membro de um valor: `foto.desenhe(...)`, `dados.leia()`, `efeito.volume`.
+- membro de um valor: `foto.desenhe(...)`, `dados.leia()`, `pessoa.nome`.
 
-O compilador verifica se a cadeia existe como API global. Se não existir, trata o lado esquerdo como receptor de um campo ou método real.
+Recursos nativos e instâncias de classes passam pelo mesmo mecanismo de despacho de membros.
 
 ### Imagem
 
@@ -156,7 +238,7 @@ jogo.iniciar("Imagem", 960, 540, 60)
 
 var foto = imagem("jogador.png")
 
-escreva(tipo(foto))       /* imagem */
+escreva(tipo(foto))
 escreva(foto.caminho)
 escreva(foto.largura)
 escreva(foto.altura)
@@ -164,8 +246,6 @@ escreva(foto.altura)
 foto.desenhe(100, 80)
 foto.desenhe(100, 80, 64, 64)
 ```
-
-`largura` e `altura` são resolvidas de forma preguiçosa pelo backend. No backend gráfico real, a textura precisa poder ser carregada naquele momento.
 
 ### Som
 
@@ -177,7 +257,7 @@ escreva(tiro.volume)
 tiro.toque()
 ```
 
-O objeto preserva seu volume. O backend de áudio atual ainda utiliza volume mestre no momento da reprodução; a separação por canal/instância é uma evolução futura do backend, não da sintaxe.
+O backend de áudio atual ainda utiliza volume mestre no momento da reprodução; o objeto preserva seu volume para a chamada.
 
 ### Arquivo
 
@@ -192,13 +272,11 @@ escreva(conteudo)
 escreva(dados.caminho)
 ```
 
-Também é válido operar diretamente sobre o retorno do construtor:
+Também é válido operar diretamente sobre o retorno de um construtor de recurso:
 
 ```leviata
 arquivo("config.txt").escreva("modo=rapido")
 ```
-
-A antiga forma `arquivo.leia("...")` foi retirada da superfície pública. `arquivo(...)` agora cria um recurso real.
 
 ## APIs especializadas
 
@@ -285,8 +363,6 @@ escreva(entidade.x(jogador), entidade.y(jogador))
 
 ### Áudio global
 
-A API global continua útil para música e configuração geral:
-
 ```leviata
 audio.iniciar()
 audio.musica("musica.ogg")
@@ -306,18 +382,19 @@ Parser / AST
    ↓
 Compilador de bytecode
    ├─ API qualificada: camera.seguir
-   └─ objeto/método: foto.desenhe
+   ├─ recursos: foto.desenhe
+   └─ classes: objeto.metodo / objeto.campo
    ↓
 VM Leviata + GC
    ↓
-Biblioteca canônica + objetos nativos
+Biblioteca canônica + objetos nativos + runtime de classes
    ↓
 Stdlib / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
 
-Os bindings históricos continuam podendo existir internamente em C para reaproveitar a implementação. A superfície `.pt` é definida pelas camadas `leviata_canon` e `leviata_resources`.
+Classes e instâncias usam mapas rastreados pelo GC. Métodos de classe são funções de bytecode normais cujo primeiro argumento implícito é `este`.
 
 ## Compilar
 
@@ -343,12 +420,26 @@ make raylib
 ./leviata --tokens programa.pt
 ```
 
+## Exemplos
+
+```text
+exemplos/hello.pt
+exemplos/listas.pt
+exemplos/matematica.pt
+exemplos/classes.pt
+exemplos/jogo.pt
+exemplos/motor2d.pt
+exemplos/mundo.pt
+exemplos/gameplay.pt
+```
+
 ## Testes
 
 ```bash
 ./leviata testes/nucleo.pt
 ./leviata testes/gameplay.pt
 ./leviata testes/recursos.pt
+./leviata testes/classes.pt
 ```
 
 Build com sanitizers:
@@ -358,6 +449,7 @@ make debug
 ./leviata_debug testes/nucleo.pt
 ./leviata_debug testes/gameplay.pt
 ./leviata_debug testes/recursos.pt
+./leviata_debug testes/classes.pt
 ```
 
-O CI executa build, exemplos, regressões do núcleo/gameplay/recursos e AddressSanitizer/UndefinedBehaviorSanitizer.
+O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes e AddressSanitizer/UndefinedBehaviorSanitizer.
