@@ -14,7 +14,7 @@ se outra.dobro(6) != 12 {
     falhar("segundo alias do mesmo modulo")
 }
 
-se util.versao_modulo != "3.6" {
+se util.versao_modulo != "3.7" {
     falhar("valor exportado pelo alias")
 }
 
@@ -23,12 +23,7 @@ se tipo(caixa) != "Caixa" {
     falhar("classe qualificada pelo alias")
 }
 se caixa.valor != 7 ou caixa.dobro() != 14 {
-    falhar("construtor de classe exportada")
-}
-
-/* Compatibilidade 3.x: o simbolo global continua existindo nesta revisao. */
-se dobro(4) != 8 {
-    falhar("compatibilidade do namespace global")
+    falhar("construtor/metodo com estado privado do modulo")
 }
 
 escreva("MOD_ALIAS_OK")
