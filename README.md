@@ -1,8 +1,8 @@
 # Leviata
 
-Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, construtores, herança, módulos e uma camada 2D/World opcional baseada em Raylib.
+Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, construtores, herança, módulos isolados e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.6**.
+A versão atual é **Leviata 3.7**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -31,8 +31,11 @@ se idade >= 18 {
 | constante | `const` | `const` |
 | condição | `if` | `se` |
 | alternativa | `else` | `senao` |
-| repetição | `while` | `enquanto` |
+| repetição condicional | `while` | `enquanto` |
 | repetição | `for` | `para` |
+| item em coleção | `in` | `em` |
+| faixa | `from ... to` | `de ... ate` |
+| função | `function`, `def`, `fn` | `funcao` |
 | retorno | `return` | `retorne` |
 | interromper laço | `break` | `pare` |
 | próxima iteração | `continue` | `continue` |
@@ -42,7 +45,6 @@ se idade >= 18 {
 | E lógico | `and`, `&&` | `e` |
 | OU lógico | `or`, `||` | `ou` |
 | negação | `not`, `!` | `nao` |
-| função | `function`, `def`, `fn` | `funcao` |
 | classe | `class` | `classe` |
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
@@ -54,7 +56,7 @@ se idade >= 18 {
 
 As formas antigas como `retornar`, `quebrar`, `continuar`, `importar`, `herdar`, `escrever()` e os operadores `&&`/`||` não pertencem à superfície canônica do Leviata 3.
 
-## Repetições
+## Controle de fluxo
 
 ```leviata
 para n de 1 ate 10 {
@@ -65,21 +67,15 @@ var frutas = ["maçã", "uva", "banana"]
 para fruta em frutas {
     escreva(fruta)
 }
-```
 
-```leviata
 para n de 1 ate 100 {
-    se n == 3 {
-        continue
-    }
-
-    se n == 10 {
-        pare
-    }
-
+    se n == 3 { continue }
+    se n == 10 { pare }
     escreva(n)
 }
 ```
+
+`e` e `ou` possuem short-circuit real.
 
 ## Funções
 
@@ -91,7 +87,7 @@ funcao soma(a, b) {
 escreva(soma(5, 3))
 ```
 
-## Classes e construtores — 3.4+
+## Classes e construtores
 
 O método especial `iniciar(...)` recebe os argumentos usados em `novo Classe(...)`.
 
@@ -111,39 +107,20 @@ classe Pessoa {
 }
 
 var ana = novo Pessoa("Ana", 30)
-
-escreva(ana.nome)
-escreva(ana.idade)
 escreva(ana.saudacao())
 escreva(tipo(ana))
 ```
 
-`novo` é uma expressão normal:
+Regras principais:
 
-```leviata
-classe Caixa {
-    var valor = nulo
-
-    funcao iniciar(valor) {
-        este.valor = valor
-    }
-}
-
-var caixa = novo Caixa(novo Pessoa("Bia", 25))
-```
-
-Regras:
-
-- `iniciar(...)` é chamado automaticamente durante `novo Classe(...)`;
-- a quantidade de argumentos deve corresponder aos parâmetros de `iniciar`;
-- o retorno de `iniciar` é ignorado: `novo` sempre devolve a instância;
-- classe sem `iniciar` possui construtor vazio e usa `novo Classe()`;
-- campos são independentes por instância;
+- `iniciar(...)` é chamado automaticamente por `novo Classe(...)`;
+- a aridade precisa corresponder;
+- o retorno de `iniciar` é ignorado;
+- `novo` sempre devolve a instância;
+- classe sem `iniciar` usa `novo Classe()`;
 - listas usadas como valor padrão são clonadas por instância.
 
-## Herança e `super` — 3.5+
-
-Uma classe filha usa `super.metodo(...)` para chamar a implementação herdada começando pela classe pai.
+## Herança e `super`
 
 ```leviata
 classe Pessoa {
@@ -172,50 +149,23 @@ classe Funcionario herda Pessoa {
 }
 
 var dev = novo Funcionario("Leo", "dev")
-escreva(dev.saudacao())
 ```
 
-Regras de `super`:
+`super.metodo(...)` começa a busca na classe pai da classe onde o método foi declarado. `super.iniciar(...)` chama explicitamente o construtor do pai.
 
-- só pode ser usado dentro de método de uma classe que possui pai;
-- `super.metodo(...)` começa a busca na classe pai da classe onde o método foi declarado;
-- funciona em cadeias de herança de vários níveis;
-- `super.iniciar(...)` é a forma de chamar explicitamente o construtor do pai;
-- construtores não são chamados automaticamente em cascata;
-- acesso direto como `super.campo` ainda não faz parte da linguagem.
+## Módulos — 3.7
 
-## Módulos básicos — 3.3+
-
-A forma simples continua válida:
-
-```leviata
-usar "modulos/util.pt"
-
-escreva(dobro(5))
-```
-
-O arquivo importado é executado uma única vez e seus símbolos globais ficam disponíveis para compatibilidade com o modelo 3.x.
-
-Regras de carregamento:
-
-- `usar` fica no escopo principal;
-- caminho relativo é resolvido a partir do arquivo importador;
-- imports aninhados usam o próprio módulo como base;
-- caminhos equivalentes não executam o arquivo novamente;
-- ciclos `A -> B -> A` são detectados;
-- módulos são carregados antes da compilação do importador;
-- a extensão é explícita, por exemplo `"util.pt"`.
-
-## Exportação e alias de módulo — 3.6
-
-Um módulo pode declarar explicitamente sua API pública:
+### Módulo com API explícita
 
 ```leviata
 /* biblioteca.pt */
-exportar const nome_biblioteca = "Ferramentas"
+exportar const nome = "Ferramentas"
+
+var fator = 2
+var segredo = 123
 
 exportar funcao dobro(valor) {
-    retorne valor * 2
+    retorne valor * fator
 }
 
 exportar classe Caixa {
@@ -224,51 +174,89 @@ exportar classe Caixa {
     funcao iniciar(valor) {
         este.valor = valor
     }
-}
 
-var segredo_interno = 123
+    funcao dobro() {
+        retorne este.valor * fator
+    }
+}
 ```
 
-O importador pode dar um nome ao módulo:
+O importador pode dar um alias ao módulo:
 
 ```leviata
 usar "biblioteca.pt" como util
 
-escreva(util.nome_biblioteca)
+escreva(util.nome)
 escreva(util.dobro(21))
 
 var caixa = novo util.Caixa(42)
+escreva(caixa.dobro())
 ```
 
-`util.segredo_interno` não existe porque o símbolo não foi marcado com `exportar`.
-
-A versão 3.6 aceita:
-
-```text
-exportar var nome = ...
-exportar const nome = ...
-exportar funcao nome(...) { ... }
-exportar classe Nome { ... }
-```
-
-Também é possível importar o mesmo módulo com mais de um alias; o arquivo continua sendo executado apenas uma vez.
-
-### Importante sobre isolamento
-
-`usar ... como ...` cria uma **visão qualificada dos símbolos exportados**. Ele ainda não cria uma VM ou tabela global isolada por arquivo. Para compatibilidade com o bytecode e com o Leviata 3.x, os símbolos originais do módulo continuam existindo no namespace global compartilhado.
-
-Portanto, no 3.6:
+No Leviata 3.7, o módulo é **isolado de verdade no nível da linguagem**:
 
 ```leviata
 usar "biblioteca.pt" como util
 
-util.dobro(5)  /* API explícita */
-dobro(5)       /* ainda existe por compatibilidade 3.x */
+util.dobro(5)  /* válido */
+dobro(5)       /* erro: o alias não vaza o símbolo */
+segredo        /* erro: símbolo privado do módulo */
 ```
 
-A diferença é que somente símbolos com `exportar` aparecem em `util.*`.
+Uma função ou método exportado continua enxergando os símbolos privados do arquivo onde foi declarado. Dois módulos podem ter variáveis, funções e classes com os mesmos nomes sem colisão.
 
-`exportar` e `usar` só podem aparecer no escopo principal.
+Exemplo:
+
+```leviata
+usar "a.pt" como a
+usar "b.pt" como b
+
+escreva(a.valor())
+escreva(b.valor())
+
+var caixa_a = novo a.Caixa()
+var caixa_b = novo b.Caixa()
+```
+
+Também funciona módulo importando outro módulo:
+
+```leviata
+/* compositor.pt */
+usar "base.pt" como base
+
+exportar funcao mensagem() {
+    retorne base.texto() + "!"
+}
+```
+
+### Import sem alias
+
+A forma simples continua válida:
+
+```leviata
+usar "util.pt"
+escreva(dobro(5))
+```
+
+Nesse caso os símbolos públicos do módulo são ligados diretamente ao escopo do importador.
+
+### Compatibilidade com módulos antigos
+
+Arquivos antigos que não usam `exportar` continuam funcionando: quando importados, suas declarações de topo são consideradas públicas. Internamente, porém, o módulo já recebe símbolos próprios e não depende mais de nomes globais compartilhados.
+
+### Regras de módulos
+
+- `usar` e `exportar` só aparecem no escopo principal;
+- caminhos relativos são resolvidos a partir do arquivo importador;
+- imports aninhados usam o próprio módulo como base;
+- cada caminho normalizado executa uma única vez por runtime;
+- caminhos equivalentes compartilham cache;
+- ciclos `A -> B -> A` são detectados;
+- `exportar` aceita `var`, `const`, `funcao` e `classe`;
+- com alias, apenas `alias.simbolo` é publicado no importador;
+- símbolos não exportados permanecem privados;
+- `novo alias.Classe(...)` funciona para classes exportadas;
+- o mesmo módulo pode receber mais de um alias sem ser executado novamente.
 
 ## Tipos e conversões
 
@@ -280,20 +268,15 @@ bool(1)
 tipo("Leviata")
 ```
 
-`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo`, `classe` e, para uma instância, o nome de sua classe.
+`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo`, `classe` e, para uma instância, o nome humano de sua classe.
 
 ## Listas
 
 ```leviata
 var nomes = lista()
-
 adicionar(nomes, "Ana")
 adicionar(nomes, "Bia")
 inserir(nomes, 1, "Caio")
-
-escreva(tamanho(nomes))
-escreva(contem(nomes, "Ana"))
-
 remover(nomes, "Bia")
 limpar(nomes)
 ```
@@ -318,45 +301,23 @@ aleatorio_int(1, 100)
 pi
 ```
 
-## Objetos nativos — 3.1+
-
-### Imagem
+## Objetos nativos
 
 ```leviata
 var foto = imagem("jogador.png")
 escreva(foto.caminho)
-escreva(foto.largura)
-escreva(foto.altura)
 foto.desenhe(100, 80)
-```
 
-### Som
-
-```leviata
 var tiro = som("tiro.wav")
 tiro.volume(0.5)
-escreva(tiro.volume)
 tiro.toque()
-```
 
-### Arquivo
-
-```leviata
 var dados = arquivo("dados.txt")
 dados.escreva("Olá")
-dados.adicione("\nOutra linha")
 escreva(dados.leia())
 ```
 
-Também é válido:
-
-```leviata
-arquivo("config.txt").escreva("modo=rapido")
-```
-
 ## APIs especializadas
-
-APIs grandes e sem receptor natural continuam agrupadas por domínio.
 
 ```leviata
 jogo.iniciar("Meu jogo", 960, 540, 60)
@@ -379,69 +340,7 @@ enquanto nao jogo.deve_fechar() {
 jogo.fechar()
 ```
 
-A interface pública não exige códigos numéricos de tecla:
-
-```leviata
-teclado.pressionada("A")
-teclado.apertada("espaco")
-teclado.pressionada("esquerda")
-```
-
-### Câmera
-
-```leviata
-camera.configurar(100, 100, 1, 0)
-camera.seguir(x, y)
-camera.suavidade(7)
-camera.limites(0, 0, 1600, 900)
-```
-
-### Desenho e colisão
-
-```leviata
-desenho.fundo(20, 24, 36)
-desenho.retangulo(x, y, 64, 64, 90, 180, 255)
-desenho.circulo(x, y, 10, 255, 255, 255)
-desenho.texto("Olá", 20, 20, 24, 255, 255, 255)
-
-colisao.retangulos(ax, ay, aw, ah, bx, by, bw, bh)
-colisao.circulos(ax, ay, raio_a, bx, by, raio_b)
-```
-
-### Cenas
-
-```leviata
-cena.mudar("jogo")
-escreva(cena.atual())
-escreva(cena.anterior())
-```
-
-### Mapas
-
-```leviata
-var mundo = mapa.carregar("mapa.csv")
-var largura = mapa.largura()
-var altura = mapa.altura()
-```
-
-### Entidades
-
-```leviata
-var jogador = entidade.criar("jogador", 100, 80, 32, 48)
-
-entidade.fisica(jogador, 980, 5)
-entidade.colisor(jogador, verdadeiro)
-entidade.velocidade(jogador, 180, 0)
-entidade.atualizar(jogador, jogo.delta())
-```
-
-### Áudio global
-
-```leviata
-audio.iniciar()
-audio.musica("musica.ogg")
-audio.volume(0.8)
-```
+Outros domínios incluem `camera`, `colisao`, `cena`, `mapa`, `entidade` e `audio`.
 
 ## Arquitetura
 
@@ -451,25 +350,31 @@ arquivo principal .pt
 resolver `usar` / `exportar` / alias
    ↓
 front-end Leviata
-   ├─ normalização de `novo Classe(args...)`
    ├─ Lexer
-   └─ Parser / AST
+   ├─ Parser / AST
+   └─ normalizações de `novo`, `super` e módulos
+   ↓
+linker de módulos
+   ├─ símbolos privados por arquivo
+   ├─ exports explícitos
+   ├─ alias qualificados
+   └─ imports aninhados
    ↓
 Compilador de bytecode
    ├─ construtores gerados por classe
    ├─ `super` lexical
-   ├─ APIs qualificadas: camera.seguir
-   ├─ recursos: foto.desenhe
-   └─ classes: objeto.metodo / objeto.campo
+   ├─ APIs qualificadas
+   ├─ recursos
+   └─ classes
    ↓
 VM Leviata + GC
-   ↓
-Biblioteca canônica + recursos + classes
    ↓
 Stdlib / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
+
+A VM ainda usa uma HashMap global como armazenamento físico, mas módulos são ligados a nomes internos inacessíveis ao código-fonte (`@m...`). Portanto, o compartilhamento físico da tabela não equivale a compartilhamento do namespace da linguagem.
 
 ## Compilar
 
@@ -522,6 +427,7 @@ exemplos/gameplay.pt
 ./leviata testes/super.pt
 ./leviata testes/modulos_main.pt
 ./leviata testes/modulos_alias_main.pt
+./leviata testes/modulos_isolamento_main.pt
 ```
 
 Build com sanitizers:
@@ -536,6 +442,7 @@ make debug
 ./leviata_debug testes/super.pt
 ./leviata_debug testes/modulos_main.pt
 ./leviata_debug testes/modulos_alias_main.pt
+./leviata_debug testes/modulos_isolamento_main.pt
 ```
 
-O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/construtores/herança/módulos, testes negativos, AddressSanitizer e UndefinedBehaviorSanitizer.
+O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/construtores/herança/módulos, testes de isolamento e colisão, casos negativos, AddressSanitizer e UndefinedBehaviorSanitizer.
