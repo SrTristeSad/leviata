@@ -1,5 +1,5 @@
 # ============================================================================
-# MOTOR LEVIATA v2.3 — Makefile
+# LEVIATA 3 — Makefile
 # ============================================================================
 
 CC      ?= gcc
@@ -16,7 +16,8 @@ SRC = src/main.c \
       src/leviata_stdlib.c \
       src/leviata_ffi.c \
       src/leviata_2d.c \
-      src/leviata_world.c
+      src/leviata_world.c \
+      src/leviata_canon.c
 
 RAYLIB_CFLAGS := $(shell pkg-config --cflags raylib 2>/dev/null)
 RAYLIB_LIBS   := $(shell pkg-config --libs raylib 2>/dev/null)
@@ -27,7 +28,7 @@ endif
 all:
 	$(CC) $(CFLAGS) -O2 $(SRC) -o $(TARGET) $(LDFLAGS)
 	@echo ""
-	@echo "✓ Motor Leviata compilado: ./$(TARGET)"
+	@echo "✓ Leviata compilado: ./$(TARGET)"
 	@echo "  Para jogos com janela real: make raylib"
 
 debug:
