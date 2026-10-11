@@ -4,6 +4,7 @@
 #ifndef LEVIATA_CANON_H
 #define LEVIATA_CANON_H
 
+#include <stdlib.h>
 #include "leviata_vm.h"
 
 /*
