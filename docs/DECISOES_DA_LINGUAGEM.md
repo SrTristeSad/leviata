@@ -1,38 +1,76 @@
 # Leviata — Especificação Canônica e Registro Histórico
 
-> Documento normativo da escrita pública do Leviata.
->
-> Este arquivo registra **como a linguagem deve ser escrita e entendida**, qual é o paralelo conceitual com linguagens em inglês e por que cada decisão foi tomada. Não é uma apostila de programação.
+> Documento normativo da escrita pública do Leviata. Define como a linguagem deve ser escrita e entendida; não é uma apostila.
 
 **Criado:** 11 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.8  
+**Versão implementada:** Leviata 3.9
 
 ---
 
 # 1. Identidade
 
-Leviata é uma linguagem própria escrita em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
+Leviata é uma linguagem própria em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
 
-Conceitos como condição, função, classe, módulo, mapa e herança são universais. O paralelo em inglês serve apenas para identificar o conceito correspondente.
-
-Regra central:
+Conceitos universais são usados quando ajudam, mas a escrita pública segue uma regra central:
 
 > **Uma ideia, uma forma oficial.**
 
-Exemplo:
+A linguagem deve ser curta sem ser criptográfica, previsível, consistente e capaz de crescer sem nomes gigantes.
 
-```leviata
-escreva("Ola")
-```
-
-A linguagem pública não deve manter simultaneamente `print`, `imprimir`, `escrever` e `escreva` para a mesma operação.
+Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, tooling e portabilidade. Siglas são aceitas quando são reconhecíveis e realmente reduzem ruído.
 
 ---
 
-# 2. Princípios de escrita
+# 2. Vocabulário canônico
 
-A linguagem deve ser curta sem ser criptográfica, legível, previsível, consistente, fácil de memorizar e capaz de crescer sem nomes gigantes.
+| Conceito | Paralelo comum | Leviata |
+|---|---|---|
+| saída | `print` | `escreva` |
+| entrada | `input`, `read` | `leia` |
+| variável | `var`, `let` | `var` |
+| constante | `const` | `const` |
+| condição | `if` | `se` |
+| alternativa | `else` | `senao` |
+| while | `while` | `enquanto` |
+| for | `for` | `para` |
+| in | `in` | `em` |
+| faixa | `from ... to` | `de ... ate` |
+| função | `function`, `def`, `fn` | `funcao` |
+| retorno | `return` | `retorne` |
+| break | `break` | `pare` |
+| continue | `continue` | `continue` |
+| true | `true` | `verdadeiro` |
+| false | `false` | `falso` |
+| null | `null`, `nil`, `None` | `nulo` |
+| AND | `and`, `&&` | `e` |
+| OR | `or`, `||` | `ou` |
+| NOT | `not`, `!` | `nao` |
+| classe | `class` | `classe` |
+| nova instância | `new` | `novo` |
+| objeto atual | `this`, `self` | `este` |
+| herança | `extends`, `inherit` | `herda` |
+| classe pai | `super` | `super` |
+| módulo | `import`, `use` | `usar` |
+| exportação | `export` | `exportar` |
+| alias | `as` | `como` |
+
+Formas históricas removidas:
+
+```text
+escrever  -> escreva
+retornar  -> retorne
+quebrar   -> pare
+continuar -> continue
+importar  -> usar
+herdar    -> herda
+```
+
+`&&`, `||` e `!` não fazem parte da lógica canônica. `!=` continua sendo operador de diferença.
+
+---
+
+# 3. Símbolos e blocos
 
 Símbolos universais permanecem símbolos:
 
@@ -50,68 +88,21 @@ se idade >= 18 {
 }
 ```
 
-Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, tooling e portabilidade. Siglas são permitidas quando são reconhecíveis e economizam escrita sem prejudicar leitura.
+Não existem `entao`, `faca`, `fimse`, `fimenquanto` ou equivalentes obrigatórios.
 
----
-
-# 3. Vocabulário canônico
-
-| Conceito | Paralelo comum | Leviata |
-|---|---|---|
-| saída | `print`, `printf` | `escreva` |
-| entrada | `input`, `read` | `leia` |
-| variável | `var`, `let` | `var` |
-| constante | `const` | `const` |
-| condição | `if` | `se` |
-| alternativa | `else` | `senao` |
-| laço condicional | `while` | `enquanto` |
-| laço | `for` | `para` |
-| item em coleção | `in` | `em` |
-| início de faixa | `from` | `de` |
-| fim de faixa | `to` | `ate` |
-| função | `function`, `def`, `fn` | `funcao` |
-| retorno | `return` | `retorne` |
-| interromper laço | `break` | `pare` |
-| próxima iteração | `continue` | `continue` |
-| verdadeiro | `true` | `verdadeiro` |
-| falso | `false` | `falso` |
-| nulo | `null`, `nil`, `None` | `nulo` |
-| E lógico | `and`, `&&` | `e` |
-| OU lógico | `or`, `||` | `ou` |
-| negação | `not`, `!` | `nao` |
-| mapa/dicionário | `map`, `dict`, object literal | `mapa`, `{ chave: valor }` |
-| classe | `class` | `classe` |
-| nova instância | `new` | `novo` |
-| objeto atual | `this`, `self` | `este` |
-| herança | `extends`, `inherit` | `herda` |
-| classe pai | `super` | `super` |
-| módulo | `import`, `use` | `usar` |
-| exportação | `export` | `exportar` |
-| alias | `as` | `como` |
-
-Formas históricas removidas:
-
-```text
-retornar  -> retorne
-quebrar   -> pare
-continuar -> continue
-importar  -> usar
-herdar    -> herda
-escrever  -> escreva
-```
-
-`&&`, `||` e `!` não pertencem à lógica canônica. `!=` continua sendo diferença.
+Ponto e vírgula não é obrigatório.
 
 ---
 
 # 4. Tipos e conversões
+
+Formas canônicas:
 
 ```text
 str / String   -> txt
 int            -> int
 float / double -> dec
 bool / Boolean -> bool
-map / dict     -> mapa
 ```
 
 ```leviata
@@ -119,10 +110,9 @@ var a = txt(123)
 var b = int("42")
 var c = dec("3.14")
 var d = bool(1)
-var e = mapa()
 ```
 
-`tipo(valor)` usa nomes canônicos do Leviata.
+`tipo(valor)` usa os nomes canônicos da linguagem.
 
 ---
 
@@ -144,11 +134,11 @@ para fruta em frutas {
 }
 ```
 
-`e` e `ou` possuem short-circuit real. `pare` e `continue` fazem unwind correto das variáveis locais abandonadas.
+`ate` é inclusivo. `e` e `ou` possuem short-circuit real. `pare` e `continue` fazem unwind correto de variáveis locais abandonadas.
 
 ---
 
-# 6. Funções, listas e texto
+# 6. Funções
 
 ```leviata
 funcao soma(a, b) {
@@ -158,7 +148,9 @@ funcao soma(a, b) {
 
 Função sem `retorne` explícito devolve `nulo`.
 
-Lista:
+---
+
+# 7. Listas
 
 ```leviata
 var nomes = ["Ana", "Bia"]
@@ -167,7 +159,91 @@ inserir(nomes, 1, "Duda")
 remover(nomes, "Bia")
 ```
 
-Texto:
+Operações genéricas devem ser reutilizadas quando o primeiro argumento já deixa o tipo claro. Evitar nomes como `lista_adicionar` na superfície pública.
+
+---
+
+# 8. Mapas — 3.8
+
+Mapa é a estrutura chave/valor da linguagem:
+
+```leviata
+var pessoa = {
+    nome: "Alex",
+    idade: 29,
+    endereco: {
+        cidade: "Salvador"
+    }
+}
+```
+
+Acesso equivalente:
+
+```leviata
+pessoa.nome
+pessoa["nome"]
+```
+
+Atribuição:
+
+```leviata
+pessoa.idade = 30
+pessoa["idade"] += 1
+pessoa["online"] = verdadeiro
+```
+
+Operações:
+
+```text
+mapa(...)
+chaves(mapa)
+valores(mapa)
+tamanho(mapa)
+contem(mapa, chave)
+remover(mapa, chave)
+limpar(mapa)
+```
+
+Chaves públicas são textos. Chaves iniciadas por `@` são reservadas ao runtime.
+
+`mapa` como estrutura de dados não elimina o namespace especializado `mapa.carregar(...)` do motor de tilemap: o contexto distingue os dois conceitos.
+
+---
+
+# 9. Iteração chave/valor — 3.9
+
+Forma canônica para percorrer mapas:
+
+```leviata
+para chave, valor em dados {
+    escreva(chave, valor)
+}
+```
+
+Decisões:
+
+1. listas continuam usando uma variável:
+
+```leviata
+para item em lista {
+    escreva(item)
+}
+```
+
+2. mapas usam duas variáveis quando o programador quer chave e valor;
+3. a expressão da coleção é avaliada uma única vez;
+4. a iteração usa um snapshot dos pares existentes no início do laço;
+5. mutações posteriores do mapa não alteram o conjunto de pares já selecionado;
+6. `pare` e `continue` mantêm a mesma semântica dos outros laços;
+7. `pares(mapa)` expõe explicitamente o snapshot como lista de pares `[chave, valor]` quando isso for útil fora do `para`.
+
+Internamente, a forma dupla é normalizada para um foreach comum sobre `pares(...)`. Isso reaproveita o bytecode já estável de iteração e evita criar uma segunda implementação de laço.
+
+---
+
+# 10. Texto
+
+Funções canônicas:
 
 ```text
 maiusculas
@@ -181,7 +257,7 @@ tamanho
 
 ---
 
-# 7. Matemática
+# 11. Matemática
 
 Matemática não recebe namespace quando o nome já identifica a operação:
 
@@ -203,15 +279,27 @@ aleatorio_int
 pi
 ```
 
-Preferir `raiz(25)`, não `mat.raiz(25)`.
+Preferir:
+
+```leviata
+raiz(25)
+```
+
+não:
+
+```text
+mat.raiz(25)
+```
 
 ---
 
-# 8. Função, objeto ou namespace
+# 12. Função, objeto ou namespace
 
 Regra oficial:
 
-> **Função autoexplicativa fica global. Recurso com estado vira objeto. Namespace só é usado quando realmente evita ambiguidade ou organiza uma API ampla.**
+> **Função autoexplicativa fica global. Recurso com estado vira objeto. Namespace só aparece quando realmente evita ambiguidade ou organiza uma API ampla.**
+
+Exemplos:
 
 ```leviata
 raiz(25)
@@ -227,9 +315,9 @@ Isso substitui APIs históricas como `jogo_desenhar_retangulo` e `jogo_camera_se
 
 ---
 
-# 9. Objetos nativos — 3.1
+# 13. Objetos nativos — 3.1
 
-Recursos com estado usam objeto e métodos:
+Recursos com estado são objetos:
 
 ```leviata
 var foto = imagem("jogador.png")
@@ -246,7 +334,7 @@ escreva(dados.leia())
 
 ---
 
-# 10. Classes e herança — 3.2
+# 14. Classes — 3.2
 
 ```leviata
 classe Pessoa {
@@ -256,26 +344,13 @@ classe Pessoa {
         este.nome = valor
     }
 }
-
-classe Funcionario herda Pessoa {
-    var cargo = "dev"
-}
 ```
 
-Decisões:
-
-- `classe` declara um tipo do usuário;
-- `novo` cria uma instância;
-- `este` é o receptor implícito;
-- métodos usam bytecode normal com `este` como primeiro argumento implícito;
-- listas padrão são clonadas por instância;
-- lookup normal de método percorre filho -> pai.
+`este` é o receptor implícito. Campos pertencem à instância. Listas usadas como padrão são clonadas por instância.
 
 ---
 
-# 11. Construtores — 3.4
-
-Forma canônica:
+# 15. Construtores — 3.4
 
 ```leviata
 classe Pessoa {
@@ -289,42 +364,13 @@ classe Pessoa {
 var alex = novo Pessoa("Alex")
 ```
 
-Paralelo:
-
-```text
-constructor / __init__ -> iniciar
-new Class(args...)     -> novo Classe(args...)
-```
-
-Semântica:
-
-1. `novo Classe(args...)` cria a instância;
-2. `iniciar(...)`, se existir, é chamado automaticamente;
-3. a aridade deve corresponder;
-4. o retorno de `iniciar` é ignorado;
-5. `novo` sempre devolve a instância;
-6. classe sem `iniciar` usa `novo Classe()`;
-7. `novo` é expressão e pode aparecer aninhado.
+`iniciar(...)` é chamado automaticamente por `novo Classe(args...)`. A aridade deve corresponder. O retorno de `iniciar` é ignorado e `novo` sempre devolve a instância.
 
 ---
 
-# 12. `super` — 3.5
-
-`super` representa a implementação da classe pai **a partir da classe onde o método atual foi declarado**.
+# 16. Herança e `super` — 3.5
 
 ```leviata
-classe Pessoa {
-    var nome = ""
-
-    funcao iniciar(nome) {
-        este.nome = nome
-    }
-
-    funcao saudacao() {
-        retorne "Oi " + este.nome
-    }
-}
-
 classe Funcionario herda Pessoa {
     var cargo = ""
 
@@ -332,268 +378,63 @@ classe Funcionario herda Pessoa {
         super.iniciar(nome)
         este.cargo = cargo
     }
-
-    funcao saudacao() {
-        retorne super.saudacao() + " / " + este.cargo
-    }
 }
 ```
 
-Decisões:
-
-- `super.metodo(...)` só é válido dentro de método de classe com pai;
-- a busca começa no pai lexical da classe atual;
-- isso evita recursão no override atual;
-- `super.iniciar(...)` é a chamada explícita ao construtor do pai;
-- construtores não são chamados automaticamente em cascata;
-- `super.campo` não existe; campos herdados continuam acessíveis por `este.campo`.
-
-`super` foi mantido porque é curto e tecnicamente reconhecível. Uma tradução longa reduziria a simplicidade sem melhorar a precisão.
+`super.metodo(...)` começa a busca na classe pai lexical da classe onde o método atual foi declarado. Construtores pais não são chamados automaticamente em cascata.
 
 ---
 
-# 13. Módulos básicos — 3.3
+# 17. Módulos — 3.3 a 3.7
 
-Forma original:
+Importação simples:
 
 ```leviata
-usar "modulos/util.pt"
+usar "util.pt"
 ```
 
-Regras que continuam válidas:
-
-1. `usar` só aparece no escopo principal;
-2. caminho é relativo ao importador;
-3. imports aninhados usam o módulo atual como base;
-4. cada caminho normalizado executa uma vez;
-5. caminhos equivalentes compartilham cache;
-6. ciclos são detectados;
-7. extensão do arquivo é explícita.
-
-No 3.3 o namespace era global compartilhado. Essa limitação foi removida no 3.7.
-
----
-
-# 14. Exportação e alias — 3.6
-
-Um módulo declara sua API pública com `exportar`:
+API explícita:
 
 ```leviata
-exportar const nome = "Ferramentas"
-
-exportar funcao dobro(valor) {
-    retorne valor * 2
+exportar funcao dobro(x) {
+    retorne x * 2
 }
-
-exportar classe Caixa {
-    var valor = 0
-}
-
-var segredo = 123
 ```
 
-Formas aceitas:
-
-```text
-exportar var nome = ...
-exportar const nome = ...
-exportar funcao nome(...) { ... }
-exportar classe Nome { ... }
-```
-
-Importação com alias:
+Alias:
 
 ```leviata
-usar "biblioteca.pt" como util
-
-escreva(util.nome)
+usar "util.pt" como util
 escreva(util.dobro(5))
-var caixa = novo util.Caixa(10)
 ```
 
-O 3.6 introduziu a API explícita, mas ainda mantinha os símbolos originais no namespace global por compatibilidade. Isso foi uma etapa transitória, não o modelo final.
+Regras atuais:
+
+- `usar` e `exportar` só aparecem no escopo principal;
+- caminho relativo é resolvido a partir do importador;
+- cada caminho normalizado executa uma vez;
+- ciclos são detectados;
+- `exportar` aceita `var`, `const`, `funcao` e `classe`;
+- com alias, apenas `alias.simbolo` fica visível;
+- privados não vazam;
+- funções e métodos exportados continuam enxergando privados do próprio módulo;
+- dois módulos podem usar os mesmos nomes sem colisão;
+- `novo alias.Classe(...)` funciona;
+- módulos antigos sem `exportar` tratam declarações de topo como públicas por compatibilidade.
+
+O isolamento é feito por linkedição para nomes internos `@m...`, não por uma VM separada para cada arquivo.
 
 ---
 
-# 15. Isolamento de módulos — 3.7
+# 18. O ponto (`.`)
 
-No Leviata 3.7, módulos possuem **namespace isolado no nível da linguagem**.
-
-```leviata
-/* biblioteca.pt */
-var fator = 2
-var segredo = 123
-
-exportar funcao dobro(valor) {
-    retorne valor * fator
-}
-```
-
-```leviata
-/* programa.pt */
-usar "biblioteca.pt" como util
-
-util.dobro(5)  /* válido */
-dobro(5)       /* erro */
-segredo        /* erro */
-```
-
-Decisões:
-
-- símbolo privado não aparece no importador;
-- import com alias não cria automaticamente a forma sem prefixo;
-- função ou método exportado continua enxergando os privados do módulo onde foi declarado;
-- dois módulos podem declarar o mesmo nome sem colisão;
-- duas classes exportadas podem ter o mesmo nome humano quando importadas por aliases diferentes;
-- `tipo(instancia)` continua mostrando o nome humano da classe;
-- `novo alias.Classe(...)` liga ao construtor correto;
-- módulo pode importar outro módulo com alias e usar esse alias dentro de suas próprias funções;
-- o cache por caminho e a detecção de ciclos continuam válidos.
-
-Exemplo de dois módulos independentes:
-
-```leviata
-usar "a.pt" como a
-usar "b.pt" como b
-
-escreva(a.valor())
-escreva(b.valor())
-
-var caixa_a = novo a.Caixa()
-var caixa_b = novo b.Caixa()
-```
-
-## Compatibilidade de módulos antigos
-
-Arquivo antigo sem nenhum `exportar` continua utilizável:
-
-```leviata
-/* legado.pt */
-funcao dobro(x) { retorne x * 2 }
-```
-
-```leviata
-usar "legado.pt"
-escreva(dobro(5))
-```
-
-Quando um módulo não possui exportação explícita, suas declarações de topo são tratadas como API pública por compatibilidade. Isso não significa voltar ao namespace compartilhado: internamente os símbolos continuam isolados.
-
-## Implementação escolhida
-
-A VM ainda possui uma HashMap física de globais. Criar uma segunda VM por módulo seria pesado e duplicaria estado do runtime.
-
-O 3.7 adotou **linkedição de símbolos**:
-
-```text
-nome no fonte      -> símbolo interno
-segredo             -> @m1:0
-dobro               -> @m1:1
-novo Caixa          -> @m1:c2
-```
-
-O bytecode do módulo é reescrito para esses nomes internos. Eles contêm `@`, caractere que não pode iniciar identificadores normais do código-fonte, portanto não fazem parte da superfície pública.
-
-Imports ligam nomes visíveis diretamente ao símbolo interno do módulo de origem. Nomes qualificados usados dentro de outro módulo recebem uma dica temporária de compilação e essa dica é removida antes da execução.
-
-Essa estratégia produz isolamento real para o programador sem duplicar a VM nem depender de substituição textual de código.
-
----
-
-# 16. Mapas — 3.8
-
-O conceito paralelo é `map`, `dictionary` ou estrutura chave/valor. A forma canônica da linguagem é **mapa**.
-
-Literal:
-
-```leviata
-var pessoa = {
-    nome: "Alex",
-    idade: 29,
-    endereco: {
-        cidade: "Salvador"
-    }
-}
-```
-
-Acesso:
-
-```leviata
-pessoa.nome
-pessoa["idade"]
-pessoa.endereco.cidade
-```
-
-Mutação:
-
-```leviata
-pessoa.idade = 30
-pessoa["idade"] += 2
-pessoa["online"] = verdadeiro
-```
-
-Operações:
-
-```leviata
-tamanho(pessoa)
-contem(pessoa, "online")
-chaves(pessoa)
-valores(pessoa)
-remover(pessoa, "online")
-limpar(pessoa)
-```
-
-Decisões:
-
-- chaves públicas são textos;
-- `{}` é mapa vazio;
-- `mapa()` também cria mapa vazio e serve como construtor funcional;
-- `{ nome: valor }` converte a chave identificadora para o texto `"nome"`;
-- chave que não é identificador simples usa a forma textual, por exemplo `{ "nome-completo": valor }`;
-- `mapa.nome` e `mapa["nome"]` acessam a mesma entrada;
-- atribuição por ponto ou índice cria a entrada quando ela ainda não existe;
-- `+=`, `-=`, `*=` e `/=` usam a mesma indexação genérica usada por listas;
-- chave ausente lida por acesso retorna `nulo`;
-- índice de lista continua numérico; chave de mapa é textual;
-- `bool(mapa)` é falso quando vazio e verdadeiro quando não vazio;
-- nomes iniciados por `@` são reservados ao runtime e não podem ser usados como chaves públicas;
-- `chaves` e `valores` retornam listas;
-- operações já existentes (`tamanho`, `contem`, `remover`, `limpar`) foram estendidas em vez de criar nomes redundantes como `mapa_tamanho` ou `mapa_remover`.
-
-A palavra `mapa` também já aparece no domínio gráfico como `mapa.carregar(...)`. Isso não cria uma segunda estrutura de dados. O contexto diferencia:
-
-```leviata
-var dados = mapa()              /* coleção chave/valor */
-var mundo = mapa.carregar(...)  /* API de tilemap do motor */
-```
-
-Não foi criado `dicionario` apenas para fugir dessa sobreposição, porque isso aumentaria o vocabulário sem ganho semântico real.
-
-## Implementação escolhida
-
-`LV_TYPE_MAP` já existia para classes e instâncias. O 3.8 reutiliza o mesmo tipo físico, distinguindo mapas públicos das estruturas internas marcadas como classe/instância.
-
-A indexação deixa de ser conceitualmente exclusiva de listas. Antes do compilador 3.5, a camada 3.8 transforma operações de índice em despachos internos genéricos:
-
-```text
-colecao[indice]       -> @indice.obter(...)
-colecao[indice] = x   -> @indice.definir(...)
-colecao[indice] += x  -> @indice.composto(...)
-```
-
-Esses nomes internos não pertencem à linguagem pública.
-
----
-
-# 17. O ponto (`.`)
-
-O ponto possui usos consistentes:
+O ponto mantém usos coerentes:
 
 ```leviata
 camera.seguir(x, y)      /* API estática */
-foto.desenhe(x, y)       /* método de objeto */
-pessoa.nome              /* campo de instância ou chave de mapa */
-util.dobro(5)            /* exportação de módulo */
+foto.desenhe(x, y)       /* método */
+pessoa.nome              /* campo */
+util.dobro(5)            /* export de módulo */
 novo util.Caixa(10)      /* classe exportada */
 ```
 
@@ -601,72 +442,22 @@ O compilador resolve nomes qualificados conhecidos antes do acesso dinâmico a m
 
 ---
 
-# 18. Modelo interno
+# 19. Modelo interno
 
-Recursos nativos usam `LV_TYPE_OBJECT`. Classes, instâncias e mapas de usuário usam `LV_TYPE_MAP`, rastreado pelo GC.
+Detalhes internos não são sintaxe pública.
 
-Chaves internas de classe começam com `@`:
-
-```text
-@tipo
-@nome
-@pai
-@classe
-@campo:<nome>
-@metodo:<nome>
-```
-
-Módulos adicionam chaves internas do linker:
+Podem existir nomes como:
 
 ```text
-@m<modulo>:<simbolo>
-@m<modulo>:c<classe>
-```
-
-A indexação genérica 3.8 usa handlers internos:
-
-```text
+@classe.criar
+@obj.metodo
 @indice.obter
-@indice.definir
-@indice.composto
-```
-
-O runtime mantém:
-
-- caminhos já carregados;
-- pilha de caminhos em carregamento para detectar ciclos;
-- símbolos declarados por módulo;
-- lista de exports;
-- links de imports para símbolos internos.
-
-Marcadores internos usados pelo front-end são consumidos antes da compilação e suas ASTs são liberadas integralmente.
-
----
-
-# 19. Implementação versus superfície pública
-
-Nome interno não é especificação da linguagem.
-
-Internamente podem existir:
-
-```text
-jogo_desenhar_retangulo
-@classe.super_metodo
-@indice.obter
-__leviata_exportar
-__leviata_alias_import
 @m2:4
+__leviata_par_0
+jogo_desenhar_retangulo
 ```
 
-Publicamente:
-
-```leviata
-desenho.retangulo(...)
-super.metodo(...)
-var dados = { nome: "Alex" }
-exportar funcao nome(...) { ... }
-usar "arquivo.pt" como modulo
-```
+Eles existem para implementar a linguagem e podem mudar sem alterar o código Leviata válido.
 
 ---
 
@@ -678,8 +469,8 @@ Toda mudança pública deve responder:
 2. Qual é o paralelo comum?
 3. Qual será a única forma canônica?
 4. Por que essa forma é melhor para o Leviata?
-5. A implementação já suporta essa forma ou é proposta?
-6. Qual o impacto de compatibilidade?
+5. A implementação já suporta a forma?
+6. Qual é o impacto de compatibilidade?
 
 Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
@@ -687,137 +478,85 @@ Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 # 21. Registro histórico
 
-## 10 de outubro de 2026 — Definição inicial do vocabulário
+## 10 de outubro de 2026 — vocabulário inicial
 
-O projeto começou a reorganizar um protótipo que havia acumulado múltiplos nomes e APIs longas sem regra única. Foi estabelecido **uma ideia, uma forma oficial**.
-
-```text
-print  -> escreva
-input  -> leia
-if     -> se
-else   -> senao
-while  -> enquanto
-for    -> para
-return -> retorne
-break  -> pare
-```
-
-Também foram adotadas siglas curtas e reconhecíveis (`txt`, `int`, `dec`, `bool`) e matemática sem `mat.` quando o nome já é autoexplicativo.
-
-## 11 de outubro de 2026 — Documento normativo
-
-Foi criado este registro histórico para impedir que futuras mudanças de sintaxe ou biblioteca voltem a acumular aliases e decisões contraditórias.
+Foram definidos `escreva`, `leia`, `se`, `senao`, `enquanto`, `para`, `funcao`, `retorne`, `pare`, conversões curtas e matemática sem namespace redundante.
 
 ## 11 de outubro de 2026 — Leviata 3.0
 
-A escrita canônica passou ao lexer, parser, compilador, biblioteca, exemplos e testes. Entraram `escreva/leia`, `retorne`, `pare/continue`, `para ... em ...`, `e/ou/nao`, conversões curtas, listas curtas, matemática global, APIs qualificadas e teclas por nome.
+A escrita canônica passou ao lexer, parser, compilador, biblioteca, exemplos e testes. Entraram `para ... em ...`, lógica `e/ou/nao`, APIs qualificadas e teclas por nome.
 
-## 11 de outubro de 2026 — Leviata 3.1
+## Leviata 3.1
 
 `imagem`, `som` e `arquivo` passaram a ser objetos com campos e métodos.
 
-## 11 de outubro de 2026 — Leviata 3.2
+## Leviata 3.2
 
-Foram implementados `classe`, `novo`, `este`, `herda`, campos de instância, métodos, sobrescrita e herança.
+Entraram `classe`, `novo`, `este`, `herda`, campos, métodos e override.
 
-## 11 de outubro de 2026 — Leviata 3.3
+## Leviata 3.3
 
-`usar "arquivo.pt"` passou a carregar módulos reais com caminho relativo, cache de execução única, import aninhado e detecção de ciclo. O namespace ainda era global compartilhado.
+`usar` passou a carregar módulos reais com caminho relativo, cache, import aninhado e detecção de ciclo.
 
-## 11 de outubro de 2026 — Leviata 3.4
+## Leviata 3.4
 
-Construtores ganharam argumentos com `funcao iniciar(...)` e `novo Classe(...)`.
+`iniciar(...)` tornou-se construtor com argumentos usados por `novo Classe(...)`.
 
-## 11 de outubro de 2026 — Leviata 3.5
+## Leviata 3.5
 
-Foi implementado `super.metodo(...)` com semântica lexical de classe pai, incluindo `super.iniciar(...)`.
+Entrou `super.metodo(...)` com semântica lexical de classe pai.
 
-## 11 de outubro de 2026 — Leviata 3.6
+## Leviata 3.6
 
-Módulos ganharam API explícita:
+Entraram `exportar` e `usar ... como ...`.
 
-```leviata
-exportar funcao dobro(x) { retorne x * 2 }
-usar "util.pt" como util
-util.dobro(5)
-novo util.Caixa(10)
-```
+## Leviata 3.7
 
-O alias expunha apenas símbolos exportados, mas era uma visão qualificada sobre o namespace global compartilhado. Durante a implementação, o LeakSanitizer encontrou ASTs de marcadores internos que eram tornadas inalcançáveis; o runtime foi corrigido e ASan/UBSan voltaram a ficar verdes.
+Módulos ganharam isolamento real de nomes por linkedição de símbolos internos.
 
-## 11 de outubro de 2026 — Leviata 3.7
+## Leviata 3.8
 
-Foi removida a principal limitação do 3.6: módulos passaram a ter isolamento real de nomes no nível da linguagem.
+Mapas viraram estrutura pública da linguagem com literal `{ chave: valor }`, acesso por ponto e índice, escrita, `chaves`, `valores` e integração com operações genéricas.
 
-A implementação adotou um linker de símbolos internos em vez de uma VM separada por arquivo. O bytecode de cada módulo referencia chaves privadas `@m...`; imports ligam exports diretamente a essas chaves.
+## Leviata 3.9
 
-Foram adicionadas regressões para:
-
-- dois módulos com variáveis privadas de mesmo nome;
-- funções públicas de mesmo nome;
-- classes públicas de mesmo nome;
-- métodos que dependem de estado privado do módulo;
-- construtores qualificados;
-- imports aninhados com alias;
-- tentativa de acessar privado do chamador;
-- tentativa de usar export de alias sem o prefixo.
-
-O primeiro teste de import aninhado revelou que o compilador classificava `origem.valor()` como método de objeto quando `origem.valor` não estava na HashMap global. A solução final usa nomes qualificados temporários somente durante a compilação e reconstrói a HashMap antes da execução, evitando vazamento de namespace.
-
-A suíte completa voltou a passar com AddressSanitizer e UndefinedBehaviorSanitizer.
-
-## 11 de outubro de 2026 — Leviata 3.8
-
-Mapas/dicionários passaram a ser uma coleção pública da linguagem:
+Mapas ganharam iteração direta de chave e valor:
 
 ```leviata
-var perfil = {
-    nome: "Alex",
-    idade: 29
+para chave, valor em mapa {
+    escreva(chave, valor)
 }
-
-perfil.idade += 1
-perfil["online"] = verdadeiro
 ```
 
-A decisão principal foi **não criar uma biblioteca paralela cheia de `mapa_*`**. As operações de coleção já existentes foram generalizadas e apenas `chaves` e `valores` foram acrescentadas onde o conceito realmente é específico.
-
-Também foi generalizada a indexação do compilador: listas continuam usando índice numérico e mapas usam chave textual pela mesma sintaxe `[]`.
-
-A implementação inicial dos wrappers 3.8 revelou uma colisão de símbolos ao tentar envolver diretamente os arquivos 3.6/3.5, que já faziam sua própria composição por macros. A arquitetura foi corrigida sem copiar parser ou compilador: o 3.8 ganhou entradas próprias `leviata_parse_v38` e `compiler_compile_program_v38`, enquanto o runtime 3.8 redireciona apenas essas entradas e delega às camadas maduras anteriores.
-
-Foram adicionadas regressões para literal, mapa aninhado, acesso por ponto/colchetes, criação e atualização de chaves, atribuição composta, `chaves`, `valores`, `tamanho`, `contem`, `remover`, `limpar`, mapa vazio, conversão booleana, chave inválida e compatibilidade da indexação de listas.
-
-A suíte completa passou com AddressSanitizer e UndefinedBehaviorSanitizer.
+A coleção é avaliada uma vez e a iteração trabalha sobre snapshot de pares. A implementação reutiliza o foreach existente por meio de uma normalização para `pares(...)`, preservando `pare`, `continue` e o bytecode estável.
 
 ---
 
 # 22. Estado canônico atual
 
-A referência implementada é **Leviata 3.8**.
+A referência implementada é **Leviata 3.9**.
 
 Recursos públicos consolidados:
 
 ```text
 escreva / leia
 se / senao / enquanto / para
+para item em lista
+para chave, valor em mapa
 funcao / retorne
 pare / continue
 verdadeiro / falso / nulo
 e / ou / nao
-lista
-mapa / { chave: valor }
-tamanho / contem / adicionar / inserir / remover / limpar
-chaves / valores
+listas
+mapas
+chaves / valores / pares
 classe / novo / este / herda / super
 iniciar como construtor
-usar
-exportar
-usar ... como ...
+usar / exportar / como
+módulos isolados
 txt / int / dec / bool
 objetos de recurso
 APIs qualificadas
-módulos isolados
 cache de módulos
 detecção de ciclos
 ```
