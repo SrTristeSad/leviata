@@ -1,0 +1,62 @@
+/* Regressão dos objetos nativos do Leviata 3.1. */
+
+funcao falhar(mensagem) {
+    escreva("FALHA_RECURSOS:", mensagem)
+    funcao_que_nao_existe()
+}
+
+var foto = imagem("teste_imagem.png")
+se tipo(foto) != "imagem" {
+    falhar("tipo de imagem")
+}
+se foto.caminho != "teste_imagem.png" {
+    falhar("campo caminho da imagem")
+}
+se foto.largura <= 0 ou foto.altura <= 0 {
+    falhar("dimensoes da imagem no backend stub")
+}
+
+/* O stub não desenha pixels, mas percorre a mesma resolução de método/cache. */
+foto.desenhe(10, 20, 32, 48)
+
+var efeito = som("teste_som.wav")
+se tipo(efeito) != "som" {
+    falhar("tipo de som")
+}
+se efeito.caminho != "teste_som.wav" {
+    falhar("campo caminho do som")
+}
+
+efeito.volume(0.25)
+se abs(efeito.volume - 0.25) > 0.0001 {
+    falhar("estado de volume")
+}
+efeito.toque()
+
+var dados = arquivo("testes/.recurso_tmp.txt")
+se tipo(dados) != "arquivo" {
+    falhar("tipo de arquivo")
+}
+se dados.caminho != "testes/.recurso_tmp.txt" {
+    falhar("campo caminho do arquivo")
+}
+
+se nao dados.escreva("A") {
+    falhar("escrita de arquivo")
+}
+se nao dados.adicione("B") {
+    falhar("append de arquivo")
+}
+se dados.leia() != "AB" {
+    falhar("leitura de arquivo")
+}
+
+/* Método também funciona diretamente sobre o retorno do construtor. */
+se nao arquivo("testes/.recurso_tmp2.txt").escreva("direto") {
+    falhar("metodo em expressao construtora")
+}
+se arquivo("testes/.recurso_tmp2.txt").leia() != "direto" {
+    falhar("leitura em expressao construtora")
+}
+
+escreva("RECURSOS_OK")
