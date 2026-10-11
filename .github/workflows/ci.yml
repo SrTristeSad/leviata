@@ -83,6 +83,9 @@ jobs:
           ./leviata testes/modulos_main.pt | tee /tmp/leviata-modules.log
           grep -q "MODULOS_OK" /tmp/leviata-modules.log
 
+          ./leviata testes/modulos_alias_main.pt | tee /tmp/leviata-module-alias.log
+          grep -q "MOD_ALIAS_OK" /tmp/leviata-module-alias.log
+
           if ./leviata testes/modulos/ciclo_a.pt; then
             echo "ERRO: ciclo de modulos deveria falhar"
             exit 1
@@ -90,6 +93,16 @@ jobs:
 
           if ./leviata testes/modulos_import_local.pt; then
             echo "ERRO: usar dentro de funcao deveria falhar"
+            exit 1
+          fi
+
+          if ./leviata testes/modulos_export_local.pt; then
+            echo "ERRO: exportar dentro de funcao deveria falhar"
+            exit 1
+          fi
+
+          if ./leviata testes/modulos_alias_nao_exportado.pt; then
+            echo "ERRO: alias nao deveria expor simbolo sem exportar"
             exit 1
           fi
 
@@ -123,4 +136,5 @@ jobs:
           ./leviata_debug testes/construtores.pt
           ./leviata_debug testes/super.pt
           ./leviata_debug testes/modulos_main.pt
+          ./leviata_debug testes/modulos_alias_main.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
