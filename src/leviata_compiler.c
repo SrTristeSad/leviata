@@ -1,12 +1,14 @@
 /* ============================================================================
- * MOTOR LEVIATA - IMPLEMENTAÇÃO DO COMPILADOR (AST -> BYTECODE)
+ * LEVIATA 3 - IMPLEMENTAÇÃO DO COMPILADOR (AST -> BYTECODE)
  * ============================================================================ */
 #include "leviata_compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* ---- Helpers de emissão de bytecode ---- */
+/* ============================================================
+ * Emissão de bytecode
+ * ============================================================ */
 static void emit(Compiler *c, uint8_t op, int32_t operand, int line) {
     chunk_write(c->chunk, op, operand, line);
 }
@@ -16,8 +18,13 @@ static int emit_jump(Compiler *c, uint8_t op, int line) {
     return c->chunk->count - 1;
 }
 
+static void patch_jump_to(Compiler *c, int idx, int target) {
+    if (idx >= 0 && idx < c->chunk->count)
+        c->chunk->code[idx].operand = target;
+}
+
 static void patch_jump(Compiler *c, int idx) {
-    c->chunk->code[idx].operand = c->chunk->count;
+    patch_jump_to(c, idx, c->chunk->count);
 }
 
 static int add_string_const(Compiler *c, const char *s) {
@@ -42,7 +49,9 @@ static int add_float_const(Compiler *c, double v) {
     return chunk_add_constant(c->chunk, cv);
 }
 
-/* ---- Gerenciamento de escopo local ---- */
+/* ============================================================
+ * Escopos locais
+ * ============================================================ */
 static int resolve_local(Compiler *c, const char *name) {
     for (int i = c->local_count - 1; i >= 0; i--) {
         if (strcmp(c->locals[i].name, name) == 0)
@@ -58,8 +67,6 @@ static int declare_local(Compiler *c, const char *name) {
         return -1;
     }
 
-    /* Impede duas declarações com o mesmo nome no mesmo bloco,
-     * mas continua permitindo shadowing em blocos aninhados. */
     for (int i = c->local_count - 1; i >= 0; i--) {
         if (c->locals[i].depth < c->scope_depth) break;
         if (c->locals[i].depth == c->scope_depth &&
@@ -96,11 +103,111 @@ static void end_scope(Compiler *c, int line) {
     c->scope_depth--;
 }
 
+/* Emite POPs necessários antes de sair de blocos por pare/continue.
+ * Não altera local_count: a estrutura lexical continua sendo compilada. */
+static void emit_unwind_to_depth(Compiler *c, int target_depth, int line) {
+    for (int i = c->local_count - 1; i >= 0; i--) {
+        if (c->locals[i].depth <= target_depth) break;
+        emit(c, OP_POP, 0, line);
+    }
+}
+
+/* ============================================================
+ * Contexto de laços
+ * ============================================================ */
+static LoopContext *loop_push(Compiler *c, int scope_depth) {
+    if (c->loop_count >= LV_LOOP_MAX) {
+        fprintf(stderr, "[LEVIATA][Compilador] Laços aninhados demais\n");
+        c->had_error = 1;
+        return NULL;
+    }
+
+    LoopContext *loop = &c->loops[c->loop_count++];
+    memset(loop, 0, sizeof(*loop));
+    loop->scope_depth = scope_depth;
+    return loop;
+}
+
+static LoopContext *loop_current(Compiler *c) {
+    if (c->loop_count <= 0) return NULL;
+    return &c->loops[c->loop_count - 1];
+}
+
+static void loop_pop(Compiler *c) {
+    if (c->loop_count > 0) c->loop_count--;
+}
+
+static void loop_add_break(Compiler *c, LoopContext *loop, int jump) {
+    if (!loop) return;
+    if (loop->break_count >= LV_LOOP_JUMP_MAX) {
+        fprintf(stderr, "[LEVIATA][Compilador] Muitos 'pare' no mesmo laço\n");
+        c->had_error = 1;
+        return;
+    }
+    loop->break_jumps[loop->break_count++] = jump;
+}
+
+static void loop_add_continue(Compiler *c, LoopContext *loop, int jump) {
+    if (!loop) return;
+    if (loop->continue_count >= LV_LOOP_JUMP_MAX) {
+        fprintf(stderr, "[LEVIATA][Compilador] Muitos 'continue' no mesmo laço\n");
+        c->had_error = 1;
+        return;
+    }
+    loop->continue_jumps[loop->continue_count++] = jump;
+}
+
+static void loop_patch_breaks(Compiler *c, LoopContext *loop, int target) {
+    if (!loop) return;
+    for (int i = 0; i < loop->break_count; i++)
+        patch_jump_to(c, loop->break_jumps[i], target);
+}
+
+static void loop_patch_continues(Compiler *c, LoopContext *loop, int target) {
+    if (!loop) return;
+    for (int i = 0; i < loop->continue_count; i++)
+        patch_jump_to(c, loop->continue_jumps[i], target);
+}
+
+/* ============================================================
+ * Nomes qualificados da API: camera.seguir, entidade.criar...
+ *
+ * O ponto não precisa virar um sistema pesado de módulos para APIs estáticas.
+ * A árvore é achatada para uma chave global única na VM.
+ * ============================================================ */
+static int qualified_name(AstNode *node, char *out, size_t out_size) {
+    if (!node || !out || out_size == 0) return 0;
+
+    if (node->type == AST_IDENT) {
+        size_t len = strlen(node->as.ident.name);
+        if (len + 1 > out_size) return 0;
+        memcpy(out, node->as.ident.name, len + 1);
+        return 1;
+    }
+
+    if (node->type == AST_FIELD) {
+        char base[LV_MAX_STRING];
+        if (!qualified_name(node->as.field_access.object, base, sizeof(base)))
+            return 0;
+
+        int written = snprintf(out, out_size, "%s.%s",
+                               base, node->as.field_access.field);
+        return written >= 0 && (size_t)written < out_size;
+    }
+
+    return 0;
+}
+
+static void emit_load_global_name(Compiler *c, const char *name, int line) {
+    int idx = add_string_const(c, name);
+    emit(c, OP_LOAD_GLOBAL, idx, line);
+}
+
 static void compile_node(Compiler *c, AstNode *node);
 static void compile_expr(Compiler *c, AstNode *node);
 
 /* ============================================================
- * EXPRESSÕES
+ * Expressões
  * ============================================================ */
 static void compile_expr(Compiler *c, AstNode *node) {
     if (!node || c->had_error) return;
@@ -135,21 +242,28 @@ static void compile_expr(Compiler *c, AstNode *node) {
 
         case AST_IDENT: {
             int slot = resolve_local(c, node->as.ident.name);
-            if (slot >= 0) {
+            if (slot >= 0)
                 emit(c, OP_LOAD_LOCAL, slot, node->line);
-            } else {
-                int idx = add_string_const(c, node->as.ident.name);
-                emit(c, OP_LOAD_GLOBAL, idx, node->line);
+            else
+                emit_load_global_name(c, node->as.ident.name, node->line);
+            break;
+        }
+
+        case AST_FIELD: {
+            char name[LV_MAX_STRING];
+            if (!qualified_name(node, name, sizeof(name))) {
+                fprintf(stderr,
+                        "[LEVIATA][Compilador] Acesso por ponto inválido na linha %d\n",
+                        node->line);
+                c->had_error = 1;
+                break;
             }
+            emit_load_global_name(c, name, node->line);
             break;
         }
 
         case AST_BINOP: {
-            /*
-             * OP_JUMP_IF_FALSE/TRUE consome a condição na VM. Portanto o
-             * short-circuit precisa reconstruir um booleano no caminho que
-             * não avalia o operando da direita.
-             */
+            /* OP_JUMP_IF_FALSE/TRUE consome a condição. */
             if (node->as.binop.op == TOK_AND) {
                 compile_expr(c, node->as.binop.left);
                 int jmp_false = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
@@ -197,7 +311,7 @@ static void compile_expr(Compiler *c, AstNode *node) {
                 case TOK_LTE:     emit(c, OP_LTE, 0, node->line); break;
                 case TOK_GTE:     emit(c, OP_GTE, 0, node->line); break;
                 default:
-                    fprintf(stderr, "[Compilador] Operador binário desconhecido\n");
+                    fprintf(stderr, "[LEVIATA][Compilador] Operador binário desconhecido\n");
                     c->had_error = 1;
                     break;
             }
@@ -206,13 +320,13 @@ static void compile_expr(Compiler *c, AstNode *node) {
 
         case AST_UNOP:
             compile_expr(c, node->as.unop.operand);
-            switch (node->as.unop.op) {
-                case TOK_MINUS: emit(c, OP_NEG, 0, node->line); break;
-                case TOK_NOT:   emit(c, OP_NOT, 0, node->line); break;
-                default:
-                    fprintf(stderr, "[Compilador] Operador unário desconhecido\n");
-                    c->had_error = 1;
-                    break;
+            if (node->as.unop.op == TOK_MINUS)
+                emit(c, OP_NEG, 0, node->line);
+            else if (node->as.unop.op == TOK_NOT)
+                emit(c, OP_NOT, 0, node->line);
+            else {
+                fprintf(stderr, "[LEVIATA][Compilador] Operador unário desconhecido\n");
+                c->had_error = 1;
             }
             break;
 
@@ -229,19 +343,19 @@ static void compile_expr(Compiler *c, AstNode *node) {
                     emit(c, OP_STORE_GLOBAL, idx, node->line);
                 }
             } else if (target->type == AST_INDEX) {
-                /* OP_INDEX_SET espera stack: objeto, índice, valor. */
                 compile_expr(c, target->as.index_access.object);
                 compile_expr(c, target->as.index_access.index);
                 compile_expr(c, node->as.assign.value);
                 emit(c, OP_INDEX_SET, 0, node->line);
             } else {
-                fprintf(stderr, "[Compilador] Alvo de atribuição inválido\n");
+                fprintf(stderr, "[LEVIATA][Compilador] Alvo de atribuição inválido\n");
                 c->had_error = 1;
             }
             break;
         }
 
         case AST_CALL:
+        case AST_METHOD_CALL:
             compile_expr(c, node->as.call.callee);
             for (int i = 0; i < node->as.call.argc; i++)
                 compile_expr(c, node->as.call.args[i]);
@@ -255,11 +369,6 @@ static void compile_expr(Compiler *c, AstNode *node) {
             break;
 
         case AST_LIST_LIT:
-            /*
-             * Cria a lista vazia e adiciona cada item na ordem da fonte.
-             * Além de preservar [a,b,c] como [a,b,c], isso preserva também
-             * a ordem de avaliação de expressões com efeitos colaterais.
-             */
             emit(c, OP_NEW_LIST, 0, node->line);
             for (int i = 0; i < node->as.list_lit.count; i++) {
                 compile_expr(c, node->as.list_lit.items[i]);
@@ -274,21 +383,23 @@ static void compile_expr(Compiler *c, AstNode *node) {
 }
 
 /* ============================================================
- * STATEMENTS
+ * Statements
  * ============================================================ */
 static void compile_node(Compiler *c, AstNode *node) {
     if (!node || c->had_error) return;
 
     switch (node->type) {
         case AST_PROGRAM:
-        case AST_BLOCK: {
-            int is_block = (node->type == AST_BLOCK);
-            if (is_block) begin_scope(c);
+            for (int i = 0; i < node->as.program.count; i++)
+                compile_node(c, node->as.program.stmts[i]);
+            break;
+
+        case AST_BLOCK:
+            begin_scope(c);
             for (int i = 0; i < node->as.block.count; i++)
                 compile_node(c, node->as.block.stmts[i]);
-            if (is_block) end_scope(c, node->line);
+            end_scope(c, node->line);
             break;
-        }
 
         case AST_VAR_DECL:
         case AST_CONST_DECL: {
@@ -313,19 +424,19 @@ static void compile_node(Compiler *c, AstNode *node) {
             LvVM *vm = c->vm;
 
             if (vm->func_count >= LV_GLOBAL_MAX) {
-                fprintf(stderr, "[Compilador] Limite de funções compiladas atingido\n");
+                fprintf(stderr, "[LEVIATA][Compilador] Limite de funções atingido\n");
                 c->had_error = 1;
                 break;
             }
 
             Chunk *fn_chunk = (Chunk*)malloc(sizeof(Chunk));
             if (!fn_chunk) {
-                fprintf(stderr,
-                        "[Compilador] Sem memória para compilar função '%s'\n",
+                fprintf(stderr, "[LEVIATA][Compilador] Sem memória para função '%s'\n",
                         fn_name);
                 c->had_error = 1;
                 break;
             }
+
             chunk_init(fn_chunk);
             fn_chunk->arity = fn_arity;
 
@@ -373,7 +484,6 @@ static void compile_node(Compiler *c, AstNode *node) {
         case AST_IF: {
             compile_expr(c, node->as.if_stmt.condition);
             int jmp_else = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
-
             compile_node(c, node->as.if_stmt.then_branch);
 
             if (node->as.if_stmt.else_branch) {
@@ -391,9 +501,17 @@ static void compile_node(Compiler *c, AstNode *node) {
             int loop_start = c->chunk->count;
             compile_expr(c, node->as.while_stmt.condition);
             int jmp_end = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
+
+            LoopContext *loop = loop_push(c, c->scope_depth);
             compile_node(c, node->as.while_stmt.body);
+
+            loop_patch_continues(c, loop, loop_start);
             emit(c, OP_JUMP, loop_start, node->line);
-            patch_jump(c, jmp_end);
+
+            int exit_target = c->chunk->count;
+            patch_jump_to(c, jmp_end, exit_target);
+            loop_patch_breaks(c, loop, exit_target);
+            loop_pop(c);
             break;
         }
 
@@ -409,7 +527,11 @@ static void compile_node(Compiler *c, AstNode *node) {
             emit(c, OP_LTE, 0, node->line);
             int jmp_end = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
 
+            LoopContext *loop = loop_push(c, c->scope_depth);
             compile_node(c, node->as.for_range.body);
+
+            int continue_target = c->chunk->count;
+            loop_patch_continues(c, loop, continue_target);
 
             emit(c, OP_LOAD_LOCAL, var_slot, node->line);
             int one = add_int_const(c, 1);
@@ -417,11 +539,102 @@ static void compile_node(Compiler *c, AstNode *node) {
             emit(c, OP_ADD, 0, node->line);
             emit(c, OP_STORE_LOCAL, var_slot, node->line);
             emit(c, OP_POP, 0, node->line);
-
             emit(c, OP_JUMP, loop_start, node->line);
-            patch_jump(c, jmp_end);
+
+            int exit_target = c->chunk->count;
+            patch_jump_to(c, jmp_end, exit_target);
+            loop_patch_breaks(c, loop, exit_target);
+            loop_pop(c);
 
             end_scope(c, node->line);
+            break;
+        }
+
+        case AST_FOR_EACH: {
+            begin_scope(c);
+
+            /* Guarda a coleção uma única vez. */
+            compile_expr(c, node->as.for_each.collection);
+            char hidden_collection[LV_MAX_IDENTIFIER];
+            snprintf(hidden_collection, sizeof(hidden_collection),
+                     "#colecao_%d_%d", node->line, c->local_count);
+            int collection_slot = declare_local(c, hidden_collection);
+
+            /* Índice interno começa em zero. */
+            int zero = add_int_const(c, 0);
+            emit(c, OP_LOAD_INT, zero, node->line);
+            char hidden_index[LV_MAX_IDENTIFIER];
+            snprintf(hidden_index, sizeof(hidden_index),
+                     "#indice_%d_%d", node->line, c->local_count);
+            int index_slot = declare_local(c, hidden_index);
+
+            /* O item visível ocupa seu próprio slot. */
+            emit(c, OP_LOAD_NULL, 0, node->line);
+            int item_slot = declare_local(c, node->as.for_each.var_name);
+
+            int loop_start = c->chunk->count;
+
+            /* indice < tamanho(colecao) */
+            emit(c, OP_LOAD_LOCAL, index_slot, node->line);
+            emit_load_global_name(c, "tamanho", node->line);
+            emit(c, OP_LOAD_LOCAL, collection_slot, node->line);
+            emit(c, OP_CALL, 1, node->line);
+            emit(c, OP_LT, 0, node->line);
+            int jmp_end = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
+
+            /* item = colecao[indice] */
+            emit(c, OP_LOAD_LOCAL, collection_slot, node->line);
+            emit(c, OP_LOAD_LOCAL, index_slot, node->line);
+            emit(c, OP_INDEX_GET, 0, node->line);
+            emit(c, OP_STORE_LOCAL, item_slot, node->line);
+            emit(c, OP_POP, 0, node->line);
+
+            LoopContext *loop = loop_push(c, c->scope_depth);
+            compile_node(c, node->as.for_each.body);
+
+            int continue_target = c->chunk->count;
+            loop_patch_continues(c, loop, continue_target);
+
+            emit(c, OP_LOAD_LOCAL, index_slot, node->line);
+            int one = add_int_const(c, 1);
+            emit(c, OP_LOAD_INT, one, node->line);
+            emit(c, OP_ADD, 0, node->line);
+            emit(c, OP_STORE_LOCAL, index_slot, node->line);
+            emit(c, OP_POP, 0, node->line);
+            emit(c, OP_JUMP, loop_start, node->line);
+
+            int exit_target = c->chunk->count;
+            patch_jump_to(c, jmp_end, exit_target);
+            loop_patch_breaks(c, loop, exit_target);
+            loop_pop(c);
+
+            end_scope(c, node->line);
+            break;
+        }
+
+        case AST_BREAK: {
+            LoopContext *loop = loop_current(c);
+            if (!loop) {
+                fprintf(stderr,
+                        "[LEVIATA][Compilador] 'pare' só pode ser usado dentro de um laço\n");
+                c->had_error = 1;
+                break;
+            }
+            emit_unwind_to_depth(c, loop->scope_depth, node->line);
+            loop_add_break(c, loop, emit_jump(c, OP_JUMP, node->line));
+            break;
+        }
+
+        case AST_CONTINUE: {
+            LoopContext *loop = loop_current(c);
+            if (!loop) {
+                fprintf(stderr,
+                        "[LEVIATA][Compilador] 'continue' só pode ser usado dentro de um laço\n");
+                c->had_error = 1;
+                break;
+            }
+            emit_unwind_to_depth(c, loop->scope_depth, node->line);
+            loop_add_continue(c, loop, emit_jump(c, OP_JUMP, node->line));
             break;
         }
 
@@ -433,12 +646,6 @@ static void compile_node(Compiler *c, AstNode *node) {
             emit(c, OP_POP, 0, node->line);
             break;
 
-        case AST_BREAK:
-        case AST_CONTINUE:
-            fprintf(stderr,
-                    "[Aviso] quebrar/continuar ainda não implementado no compilador\n");
-            break;
-
         default:
             compile_expr(c, node);
             emit(c, OP_POP, 0, node->line);
@@ -447,15 +654,12 @@ static void compile_node(Compiler *c, AstNode *node) {
 }
 
 /* ============================================================
- * API PÚBLICA
+ * API pública
  * ============================================================ */
 void compiler_init(Compiler *c, LvVM *vm, Compiler *enclosing) {
     memset(c, 0, sizeof(Compiler));
     c->vm = vm;
     c->enclosing = enclosing;
-    c->scope_depth = 0;
-    c->local_count = 0;
-    c->had_error = 0;
 }
 
 void compiler_free(Compiler *c) {
