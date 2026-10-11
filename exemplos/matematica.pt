@@ -1,11 +1,13 @@
-/* Exemplos Matemáticos */
-escrever("=== MATEMÁTICA ===")
+/* Matemática no Leviata 3 */
+escreva("=== MATEMÁTICA ===")
 
-escrever("Raiz de 16:", raiz(16))
-escrever("2^8:", potencia(2, 8))
-escrever("Pi:", pi())
-escrever("Seno(0):", seno(0))
-escrever("Arredondar(3.7):", arredondar(3.7))
-escrever("Máximo(5, 9):", maximo(5, 9))
-escrever("Mínimo(5, 9):", minimo(5, 9))
-escrever("Aleatório inteiro 1-100:", aleatorio_inteiro(1, 100))
+escreva("Raiz de 16:", raiz(16))
+escreva("2^8:", potencia(2, 8))
+escreva("Pi:", pi)
+escreva("Seno(0):", seno(0))
+escreva("Cos(0):", cos(0))
+escreva("Abs(-7):", abs(-7))
+escreva("Arredondar(3.7):", arredondar(3.7))
+escreva("Máximo(5, 9):", max(5, 9))
+escreva("Mínimo(5, 9):", min(5, 9))
+escreva("Aleatório inteiro 1-100:", aleatorio_int(1, 100))
