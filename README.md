@@ -1,8 +1,8 @@
 # Leviata
 
-Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, FFI nativa e uma camada 2D/World opcional baseada em Raylib.
+Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, módulos e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.2**.
+A versão atual é **Leviata 3.3**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -47,6 +47,7 @@ se idade >= 18 {
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
 | herança | `extends`, `inherit` | `herda` |
+| módulo | `import`, `use` | `usar` |
 
 As formas antigas como `retornar`, `quebrar`, `continuar`, `importar`, `herdar`, `escrever()` e os operadores `&&`/`||` não pertencem à superfície canônica do Leviata 3.
 
@@ -62,8 +63,6 @@ para fruta em frutas {
     escreva(fruta)
 }
 ```
-
-Controle do laço:
 
 ```leviata
 para n de 1 ate 100 {
@@ -89,9 +88,7 @@ funcao soma(a, b) {
 escreva(soma(5, 3))
 ```
 
-## Classes — 3.2
-
-Classes são declaradas no escopo principal. Campos recebem seus valores padrão na declaração e cada instância recebe seu próprio estado.
+## Classes — 3.2+
 
 ```leviata
 classe Pessoa {
@@ -115,25 +112,7 @@ escreva(ana.saudacao())
 escreva(tipo(ana))   /* Pessoa */
 ```
 
-`este` é o objeto que recebeu a chamada do método. Ele pode ler e alterar campos e também chamar outros métodos:
-
-```leviata
-classe Contador {
-    var valor = 0
-
-    funcao subir() {
-        este.valor += 1
-        retorne este.valor
-    }
-
-    funcao subir_duas() {
-        este.subir()
-        retorne este.subir()
-    }
-}
-```
-
-Listas usadas como valor padrão são clonadas por instância, evitando que dois objetos compartilhem acidentalmente a mesma lista.
+`este` é o objeto que recebeu a chamada. Campos são independentes por instância. Listas usadas como valor padrão são clonadas para impedir compartilhamento acidental entre objetos.
 
 ### Herança
 
@@ -163,9 +142,61 @@ gato.nomear("Baltazar")
 escreva(gato.falar())
 ```
 
-A classe filha herda campos e métodos. Um método definido novamente na filha substitui o método herdado.
+A classe filha herda campos e métodos e pode sobrescrever métodos do pai.
 
-Nesta primeira versão, `novo Classe()` não recebe argumentos de construtor. Inicialização personalizada é feita por campos padrão e métodos. Classes locais/aninhadas também não fazem parte do 3.2.
+Na versão atual, `novo Classe()` não recebe argumentos. Classes são declaradas no escopo principal.
+
+## Módulos — 3.3
+
+Arquivos Leviata podem carregar outros arquivos com `usar`:
+
+```leviata
+usar "modulos/util.pt"
+
+escreva(saudacao_modulo("Leviata"))
+```
+
+Um módulo pode exportar naturalmente funções, classes e variáveis globais porque o 3.3 usa **namespace global compartilhado**:
+
+```leviata
+/* modulos/util.pt */
+funcao dobro(valor) {
+    retorne valor * 2
+}
+
+classe Caixa {
+    var valor = 10
+}
+```
+
+Depois:
+
+```leviata
+usar "modulos/util.pt"
+
+escreva(dobro(5))
+var caixa = novo Caixa()
+```
+
+Regras do `usar` em 3.3:
+
+- só pode aparecer no escopo principal;
+- o caminho é relativo ao arquivo que contém o `usar`;
+- imports aninhados também resolvem seus caminhos relativamente ao próprio módulo;
+- cada arquivo é executado somente uma vez por processo;
+- importar o mesmo arquivo por caminhos equivalentes não o executa novamente;
+- ciclos como `A -> B -> A` são detectados e geram erro;
+- os módulos são carregados antes da compilação do arquivo importador;
+- a extensão deve ser informada explicitamente, por exemplo `"util.pt"`;
+- 3.3 ainda não possui `exportar`, alias nem namespace isolado por módulo.
+
+Exemplo oficial:
+
+```bash
+./leviata exemplos/modulos.pt
+```
+
+A decisão de começar com namespace compartilhado é deliberada: é melhor ter um sistema pequeno e correto do que fingir isolamento renomeando símbolos sem corrigir referências internas. Uma revisão futura pode introduzir exportação/alias de forma completa.
 
 ## Tipos e conversões
 
@@ -195,13 +226,6 @@ remover(nomes, "Bia")
 limpar(nomes)
 ```
 
-Acesso por índice continua direto:
-
-```leviata
-var numeros = [10, 20, 30]
-escreva(numeros[0])
-```
-
 ## Matemática
 
 ```leviata
@@ -224,21 +248,13 @@ pi
 
 ## Objetos nativos — 3.1+
 
-O ponto possui dois significados definidos pelo compilador:
-
-- API estática: `camera.seguir(...)`, `jogo.iniciar(...)`;
-- membro de um valor: `foto.desenhe(...)`, `dados.leia()`, `pessoa.nome`.
-
-Recursos nativos e instâncias de classes passam pelo mesmo mecanismo de despacho de membros.
+Recursos são objetos reais e usam a mesma sintaxe de membro das classes.
 
 ### Imagem
 
 ```leviata
-jogo.iniciar("Imagem", 960, 540, 60)
-
 var foto = imagem("jogador.png")
 
-escreva(tipo(foto))
 escreva(foto.caminho)
 escreva(foto.largura)
 escreva(foto.altura)
@@ -257,8 +273,6 @@ escreva(tiro.volume)
 tiro.toque()
 ```
 
-O backend de áudio atual ainda utiliza volume mestre no momento da reprodução; o objeto preserva seu volume para a chamada.
-
 ### Arquivo
 
 ```leviata
@@ -267,12 +281,11 @@ var dados = arquivo("dados.txt")
 dados.escreva("Olá")
 dados.adicione("\nOutra linha")
 
-var conteudo = dados.leia()
-escreva(conteudo)
+escreva(dados.leia())
 escreva(dados.caminho)
 ```
 
-Também é válido operar diretamente sobre o retorno de um construtor de recurso:
+Também é válido:
 
 ```leviata
 arquivo("config.txt").escreva("modo=rapido")
@@ -357,8 +370,6 @@ entidade.fisica(jogador, 980, 5)
 entidade.colisor(jogador, verdadeiro)
 entidade.velocidade(jogador, 180, 0)
 entidade.atualizar(jogador, jogo.delta())
-
-escreva(entidade.x(jogador), entidade.y(jogador))
 ```
 
 ### Áudio global
@@ -369,32 +380,30 @@ audio.musica("musica.ogg")
 audio.volume(0.8)
 ```
 
-Para efeitos associados a um recurso, prefira `som("...").toque()`.
-
 ## Arquitetura
 
 ```text
-codigo .pt
+arquivo principal .pt
    ↓
-Lexer
+resolver `usar` recursivamente
    ↓
-Parser / AST
+Lexer -> Parser / AST
    ↓
 Compilador de bytecode
-   ├─ API qualificada: camera.seguir
+   ├─ APIs qualificadas: camera.seguir
    ├─ recursos: foto.desenhe
    └─ classes: objeto.metodo / objeto.campo
    ↓
 VM Leviata + GC
    ↓
-Biblioteca canônica + objetos nativos + runtime de classes
+Biblioteca canônica + recursos + classes
    ↓
 Stdlib / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
 
-Classes e instâncias usam mapas rastreados pelo GC. Métodos de classe são funções de bytecode normais cujo primeiro argumento implícito é `este`.
+Módulos importados são executados antes do arquivo importador e compartilham a mesma VM e tabela global.
 
 ## Compilar
 
@@ -427,6 +436,7 @@ exemplos/hello.pt
 exemplos/listas.pt
 exemplos/matematica.pt
 exemplos/classes.pt
+exemplos/modulos.pt
 exemplos/jogo.pt
 exemplos/motor2d.pt
 exemplos/mundo.pt
@@ -440,6 +450,7 @@ exemplos/gameplay.pt
 ./leviata testes/gameplay.pt
 ./leviata testes/recursos.pt
 ./leviata testes/classes.pt
+./leviata testes/modulos_main.pt
 ```
 
 Build com sanitizers:
@@ -450,6 +461,7 @@ make debug
 ./leviata_debug testes/gameplay.pt
 ./leviata_debug testes/recursos.pt
 ./leviata_debug testes/classes.pt
+./leviata_debug testes/modulos_main.pt
 ```
 
-O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes e AddressSanitizer/UndefinedBehaviorSanitizer.
+O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/módulos, testes negativos de ciclo/escopo e AddressSanitizer/UndefinedBehaviorSanitizer.
