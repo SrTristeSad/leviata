@@ -2,7 +2,7 @@ name: Leviata CI
 
 on:
   push:
-    branches: [main, feature/raylib-backend]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -25,3 +25,4 @@ jobs:
           ./leviata exemplos/listas.pt
           ./leviata exemplos/matematica.pt
           ./leviata exemplos/jogo.pt
+          ./leviata exemplos/motor2d.pt
