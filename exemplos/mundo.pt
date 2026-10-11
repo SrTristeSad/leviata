@@ -20,14 +20,12 @@ cena_mudar("mundo")
 var quanto = entidade_quantidade()
 escrever("Entidades ativas:", quanto)
 
-/* Estado do loop fica global para evitar recriar slots locais a cada frame. */
 var dt = 0
 var vx = 0
 var vy = 0
 var px = 0
 var py = 0
 
-/* O backend stub executa um frame; com Raylib o loop e real. */
 enquanto (nao jogo_deve_fechar()) {
     dt = jogo_delta()
     vx = 0
@@ -36,8 +34,10 @@ enquanto (nao jogo_deve_fechar()) {
     se (jogo_tecla(68)) { vx = 180 }
 
     vy = entidade_vy(jogador)
-    se (jogo_tecla_apertada(32) e entidade_no_chao(jogador)) {
-        vy = -430
+    se (jogo_tecla_apertada(32)) {
+        se (entidade_no_chao(jogador)) {
+            vy = -430
+        }
     }
 
     entidade_velocidade(jogador, vx, vy)
