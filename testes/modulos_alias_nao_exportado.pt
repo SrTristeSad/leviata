@@ -1,4 +1,4 @@
 usar "modulos_alias/lib.pt" como util
 
-/* `secreto` existe no namespace global por compatibilidade, mas nao no alias. */
+/* `secreto` é privado: não aparece nem no alias nem no chamador. */
 escreva(util.secreto)
