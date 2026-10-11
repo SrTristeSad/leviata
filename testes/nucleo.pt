@@ -1,0 +1,107 @@
+/* Regressão do núcleo Leviata: lógica, escopos e índices. */
+
+funcao falhar(mensagem) {
+    escrever("FALHA:", mensagem)
+    funcao_que_nao_existe()
+}
+
+var chamadas = 0
+
+funcao marcar(valor) {
+    chamadas = chamadas + 1
+    retornar valor
+}
+
+/* Short-circuit: o lado direito NÃO pode executar nestes dois casos. */
+var curto_e = falso e marcar(verdadeiro)
+var curto_ou = verdadeiro ou marcar(falso)
+
+se (chamadas != 0) {
+    falhar("short-circuit executou o lado direito")
+}
+
+se (curto_e != falso) {
+    falhar("resultado de falso e X deveria ser falso")
+}
+
+se (curto_ou != verdadeiro) {
+    falhar("resultado de verdadeiro ou X deveria ser verdadeiro")
+}
+
+/* Aqui o lado direito precisa ser executado. */
+var avalia_e = verdadeiro e marcar(verdadeiro)
+var avalia_ou = falso ou marcar(verdadeiro)
+
+se (chamadas != 2) {
+    falhar("lado direito necessario nao foi executado")
+}
+
+se (avalia_e != verdadeiro) {
+    falhar("verdadeiro e verdadeiro deveria ser verdadeiro")
+}
+
+se (avalia_ou != verdadeiro) {
+    falhar("falso ou verdadeiro deveria ser verdadeiro")
+}
+
+/* Escopos locais dentro de função, while e if. */
+funcao testar_escopos() {
+    var total = 0
+    var n = 0
+
+    enquanto (n < 3) {
+        var temporario = n + 1
+        total = total + temporario
+        n = n + 1
+    }
+
+    se (total == 6) {
+        var interno = 4
+        total = total + interno
+    }
+
+    retornar total
+}
+
+se (testar_escopos() != 10) {
+    falhar("escopos locais em blocos/loops")
+}
+
+/* Shadowing em bloco não pode sobrescrever a global. */
+var externo = 10
+se (verdadeiro) {
+    var externo = 20
+    se (externo != 20) {
+        falhar("shadowing local")
+    }
+}
+
+se (externo != 10) {
+    falhar("shadowing alterou a variavel global")
+}
+
+/* Índices aceitam números numericamente inteiros. */
+var dados = [10, 20, 30]
+
+se (dados[1.0] != 20) {
+    falhar("leitura com indice 1.0")
+}
+
+dados[1.0] = 99
+se (dados[1] != 99) {
+    falhar("escrita com indice 1.0")
+}
+
+var posicao = 2.0
+dados[posicao] = 77
+se (dados[2] != 77) {
+    falhar("indice float dinamico inteiro")
+}
+
+/* Atribuição composta em índice também depende da ordem correta da stack. */
+dados[0] += 5
+se (dados[0] != 15) {
+    falhar("atribuicao composta em indice")
+}
+
+escrever("NUCLEO_OK")
