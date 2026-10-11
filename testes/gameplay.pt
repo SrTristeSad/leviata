@@ -40,6 +40,38 @@ se (entidade_x(jogador) != 0 ou entidade_y(jogador) != 0) {
     falhar("redimensionamento alterou posicao")
 }
 
+/* No backend sem Raylib a textura é simulada, permitindo testar o componente. */
+se (nao entidade_sprite(jogador, "teste_spritesheet.png", 16, 16, 4, 8, 0, 1)) {
+    falhar("criacao do componente sprite")
+}
+
+se (nao entidade_tem_componente(jogador, "sprite")) {
+    falhar("introspeccao do componente sprite")
+}
+
+entidade_atualizar(jogador, 0.2)
+se (entidade_animacao_frame(jogador) != 1) {
+    falhar("avanco da animacao")
+}
+
+entidade_sprite_inverter_x(jogador, verdadeiro)
+entidade_animacao_reproduzir(jogador, falso)
+var quadro = entidade_animacao_frame(jogador)
+entidade_atualizar(jogador, 0.2)
+se (entidade_animacao_frame(jogador) != quadro) {
+    falhar("pausa da animacao")
+}
+
+entidade_animacao_reproduzir(jogador, verdadeiro, verdadeiro)
+se (entidade_animacao_frame(jogador) != 0) {
+    falhar("reinicio da animacao")
+}
+
+entidade_sprite_remover(jogador)
+se (entidade_tem_componente(jogador, "sprite")) {
+    falhar("remocao do componente sprite")
+}
+
 var suave = jogo_camera_suavidade(8)
 se (suave != 8) {
     falhar("configuracao de camera suave")
