@@ -1,5 +1,5 @@
 /* ============================================================================
- * LEVIATA 3 - IMPLEMENTAÇÃO DO COMPILADOR (AST -> BYTECODE)
+ * LEVIATA 3.2 - IMPLEMENTAÇÃO DO COMPILADOR (AST -> BYTECODE)
  * ============================================================================ */
 #include "leviata_compiler.h"
 #include <stdio.h>
@@ -47,6 +47,11 @@ static int add_float_const(Compiler *c, double v) {
     cv.type = LV_TYPE_FLOAT;
     cv.as.f_val = v;
     return chunk_add_constant(c->chunk, cv);
+}
+
+static void emit_load_string(Compiler *c, const char *s, int line) {
+    int idx = add_string_const(c, s);
+    emit(c, OP_LOAD_STRING, idx, line);
 }
 
 /* ============================================================
@@ -168,12 +173,7 @@ static void loop_patch_continues(Compiler *c, LoopContext *loop, int target) {
 }
 
 /* ============================================================
- * Acesso por ponto
- *
- * Se a cadeia já existe como global (camera.seguir, desenho.texto...), ela é
- * uma API estática. Caso contrário, o ponto pertence ao valor da esquerda:
- * foto.desenhe() vira uma chamada oculta @metodo.desenhe(foto, ...), e
- * foto.largura vira @campo.largura(foto).
+ * Nomes qualificados da API
  * ============================================================ */
 static int qualified_name(AstNode *node, char *out, size_t out_size) {
     if (!node || !out || out_size == 0) return 0;
@@ -210,14 +210,92 @@ static int field_is_static_global(Compiler *c, AstNode *field,
     return hmap_has(&c->vm->globals, name);
 }
 
-static int hidden_name(char *out, size_t out_size,
-                       const char *kind, const char *name) {
-    int written = snprintf(out, out_size, "@%s.%s", kind, name);
-    return written >= 0 && (size_t)written < out_size;
+static int resource_constructor_expr(AstNode *node) {
+    if (!node || node->type != AST_CALL || !node->as.call.callee ||
+        node->as.call.callee->type != AST_IDENT)
+        return 0;
+
+    const char *name = node->as.call.callee->as.ident.name;
+    return strcmp(name, "imagem") == 0 ||
+           strcmp(name, "som") == 0 ||
+           strcmp(name, "arquivo") == 0;
+}
+
+static int safe_repeat_receiver(AstNode *node) {
+    if (!node) return 0;
+    if (node->type == AST_IDENT || node->type == AST_FIELD)
+        return 1;
+    return resource_constructor_expr(node);
 }
 
 static void compile_node(Compiler *c, AstNode *node);
 static void compile_expr(Compiler *c, AstNode *node);
+
+/* ============================================================
+ * Funções compiladas
+ * ============================================================ */
+static int compile_function_global(Compiler *c,
+                                   const char *global_name,
+                                   const char *display_name,
+                                   AstNode *fn,
+                                   int implicit_this) {
+    if (!fn || fn->type != AST_FUNC_DECL) return 0;
+
+    LvVM *vm = c->vm;
+    int arity = fn->as.func_decl.param_count + (implicit_this ? 1 : 0);
+
+    if (vm->func_count >= LV_GLOBAL_MAX) {
+        fprintf(stderr, "[LEVIATA][Compilador] Limite de funções atingido\n");
+        c->had_error = 1;
+        return 0;
+    }
+
+    Chunk *fn_chunk = (Chunk*)malloc(sizeof(Chunk));
+    if (!fn_chunk) {
+        fprintf(stderr, "[LEVIATA][Compilador] Sem memória para função '%s'\n",
+                display_name);
+        c->had_error = 1;
+        return 0;
+    }
+
+    chunk_init(fn_chunk);
+    fn_chunk->arity = arity;
+
+    Compiler fn_c;
+    compiler_init(&fn_c, vm, c);
+    fn_c.chunk = fn_chunk;
+    fn_c.scope_depth = 0;
+
+    if (implicit_this)
+        declare_local(&fn_c, "este");
+
+    for (int i = 0; i < fn->as.func_decl.param_count; i++)
+        declare_local(&fn_c, fn->as.func_decl.params[i]);
+
+    compile_node(&fn_c, fn->as.func_decl.body);
+
+    if (fn_c.had_error) {
+        c->had_error = 1;
+        chunk_free(fn_chunk);
+        free(fn_chunk);
+        return 0;
+    }
+
+    emit(&fn_c, OP_LOAD_NULL, 0, fn->line);
+    emit(&fn_c, OP_RETURN, 0, fn->line);
+
+    int func_idx = vm->func_count;
+    vm->functions[func_idx] = fn_chunk;
+    strncpy(vm->func_names[func_idx], display_name, LV_MAX_IDENTIFIER - 1);
+    vm->func_names[func_idx][LV_MAX_IDENTIFIER - 1] = '\0';
+    vm->func_count++;
+
+    int name_idx = add_string_const(c, global_name);
+    emit(c, OP_LOAD_FUNC, func_idx, fn->line);
+    emit(c, OP_STORE_GLOBAL, name_idx, fn->line);
+    emit(c, OP_POP, 0, fn->line);
+    return 1;
+}
 
 /* ============================================================
  * Expressões
@@ -262,6 +340,12 @@ static void compile_expr(Compiler *c, AstNode *node) {
             break;
         }
 
+        case AST_NEW:
+            emit_load_global_name(c, "@classe.novo", node->line);
+            emit_load_global_name(c, node->as.new_expr.class_name, node->line);
+            emit(c, OP_CALL, 1, node->line);
+            break;
+
         case AST_FIELD: {
             char public_name[LV_MAX_STRING];
             if (field_is_static_global(c, node, public_name, sizeof(public_name))) {
@@ -269,20 +353,10 @@ static void compile_expr(Compiler *c, AstNode *node) {
                 break;
             }
 
-            char hidden[LV_MAX_IDENTIFIER];
-            if (!hidden_name(hidden, sizeof(hidden), "campo",
-                             node->as.field_access.field) ||
-                !hmap_has(&c->vm->globals, hidden)) {
-                fprintf(stderr,
-                        "[LEVIATA][Compilador] Campo '%s' não existe (linha %d)\n",
-                        node->as.field_access.field, node->line);
-                c->had_error = 1;
-                break;
-            }
-
-            emit_load_global_name(c, hidden, node->line);
+            emit_load_global_name(c, "@obj.campo", node->line);
             compile_expr(c, node->as.field_access.object);
-            emit(c, OP_CALL, 1, node->line);
+            emit_load_string(c, node->as.field_access.field, node->line);
+            emit(c, OP_CALL, 2, node->line);
             break;
         }
 
@@ -370,6 +444,22 @@ static void compile_expr(Compiler *c, AstNode *node) {
                 compile_expr(c, target->as.index_access.index);
                 compile_expr(c, node->as.assign.value);
                 emit(c, OP_INDEX_SET, 0, node->line);
+            } else if (target->type == AST_FIELD) {
+                char public_name[LV_MAX_STRING];
+                if (field_is_static_global(c, target,
+                                           public_name, sizeof(public_name))) {
+                    fprintf(stderr,
+                            "[LEVIATA][Compilador] API estática '%s' não pode receber atribuição\n",
+                            public_name);
+                    c->had_error = 1;
+                    break;
+                }
+
+                emit_load_global_name(c, "@obj.definir", node->line);
+                compile_expr(c, target->as.field_access.object);
+                emit_load_string(c, target->as.field_access.field, node->line);
+                compile_expr(c, node->as.assign.value);
+                emit(c, OP_CALL, 3, node->line);
             } else {
                 fprintf(stderr, "[LEVIATA][Compilador] Alvo de atribuição inválido\n");
                 c->had_error = 1;
@@ -385,19 +475,24 @@ static void compile_expr(Compiler *c, AstNode *node) {
                 char public_name[LV_MAX_STRING];
                 if (!field_is_static_global(c, callee,
                                             public_name, sizeof(public_name))) {
-                    char hidden[LV_MAX_IDENTIFIER];
-                    if (!hidden_name(hidden, sizeof(hidden), "metodo",
-                                     callee->as.field_access.field) ||
-                        !hmap_has(&c->vm->globals, hidden)) {
+                    AstNode *receiver = callee->as.field_access.object;
+                    if (!safe_repeat_receiver(receiver)) {
                         fprintf(stderr,
-                                "[LEVIATA][Compilador] Método '%s' não existe (linha %d)\n",
+                                "[LEVIATA][Compilador] Guarde o receptor em 'var' antes de chamar o método '%s' (linha %d)\n",
                                 callee->as.field_access.field, node->line);
                         c->had_error = 1;
                         break;
                     }
 
-                    emit_load_global_name(c, hidden, node->line);
-                    compile_expr(c, callee->as.field_access.object);
+                    /* Busca o método pelo receptor. O receptor é emitido outra
+                     * vez apenas em formas estáveis (identificador/campo ou
+                     * construtor de recurso), pois ele será o argumento 'este'. */
+                    emit_load_global_name(c, "@obj.metodo", node->line);
+                    compile_expr(c, receiver);
+                    emit_load_string(c, callee->as.field_access.field, node->line);
+                    emit(c, OP_CALL, 2, node->line);
+
+                    compile_expr(c, receiver);
                     for (int i = 0; i < node->as.call.argc; i++)
                         compile_expr(c, node->as.call.args[i]);
                     emit(c, OP_CALL, node->as.call.argc + 1, node->line);
@@ -468,58 +563,87 @@ static void compile_node(Compiler *c, AstNode *node) {
             break;
         }
 
-        case AST_FUNC_DECL: {
-            const char *fn_name = node->as.func_decl.name;
-            int fn_arity = node->as.func_decl.param_count;
-            LvVM *vm = c->vm;
+        case AST_FUNC_DECL:
+            compile_function_global(c,
+                                    node->as.func_decl.name,
+                                    node->as.func_decl.name,
+                                    node,
+                                    0);
+            break;
 
-            if (vm->func_count >= LV_GLOBAL_MAX) {
-                fprintf(stderr, "[LEVIATA][Compilador] Limite de funções atingido\n");
+        case AST_CLASS_DECL: {
+            if (c->scope_depth != 0) {
+                fprintf(stderr,
+                        "[LEVIATA][Compilador] Classes devem ser declaradas no escopo principal nesta versão\n");
                 c->had_error = 1;
                 break;
             }
 
-            Chunk *fn_chunk = (Chunk*)malloc(sizeof(Chunk));
-            if (!fn_chunk) {
-                fprintf(stderr, "[LEVIATA][Compilador] Sem memória para função '%s'\n",
-                        fn_name);
-                c->had_error = 1;
-                break;
-            }
+            /* Classe = @classe.criar("Nome", Pai|nulo). */
+            emit_load_global_name(c, "@classe.criar", node->line);
+            emit_load_string(c, node->as.class_decl.name, node->line);
+            if (node->as.class_decl.has_parent)
+                emit_load_global_name(c, node->as.class_decl.parent, node->line);
+            else
+                emit(c, OP_LOAD_NULL, 0, node->line);
+            emit(c, OP_CALL, 2, node->line);
 
-            chunk_init(fn_chunk);
-            fn_chunk->arity = fn_arity;
-
-            Compiler fn_c;
-            compiler_init(&fn_c, vm, c);
-            fn_c.chunk = fn_chunk;
-            fn_c.scope_depth = 0;
-
-            for (int i = 0; i < fn_arity; i++)
-                declare_local(&fn_c, node->as.func_decl.params[i]);
-
-            compile_node(&fn_c, node->as.func_decl.body);
-
-            if (fn_c.had_error) {
-                c->had_error = 1;
-                chunk_free(fn_chunk);
-                free(fn_chunk);
-                break;
-            }
-
-            emit(&fn_c, OP_LOAD_NULL, 0, node->line);
-            emit(&fn_c, OP_RETURN, 0, node->line);
-
-            int func_idx = vm->func_count;
-            vm->functions[func_idx] = fn_chunk;
-            strncpy(vm->func_names[func_idx], fn_name, LV_MAX_IDENTIFIER - 1);
-            vm->func_names[func_idx][LV_MAX_IDENTIFIER - 1] = '\0';
-            vm->func_count++;
-
-            int name_idx = add_string_const(c, fn_name);
-            emit(c, OP_LOAD_FUNC, func_idx, node->line);
-            emit(c, OP_STORE_GLOBAL, name_idx, node->line);
+            int class_name_idx = add_string_const(c, node->as.class_decl.name);
+            emit(c, OP_STORE_GLOBAL, class_name_idx, node->line);
             emit(c, OP_POP, 0, node->line);
+
+            for (int i = 0; i < node->as.class_decl.member_count; i++) {
+                AstNode *member = node->as.class_decl.members[i];
+                if (!member) continue;
+
+                if (member->type == AST_VAR_DECL ||
+                    member->type == AST_CONST_DECL) {
+                    emit_load_global_name(c, "@classe.campo", member->line);
+                    emit_load_global_name(c, node->as.class_decl.name, member->line);
+                    emit_load_string(c, member->as.var_decl.name, member->line);
+                    if (member->as.var_decl.init)
+                        compile_expr(c, member->as.var_decl.init);
+                    else
+                        emit(c, OP_LOAD_NULL, 0, member->line);
+                    emit(c, OP_CALL, 3, member->line);
+                    emit(c, OP_POP, 0, member->line);
+                    continue;
+                }
+
+                if (member->type == AST_FUNC_DECL) {
+                    char hidden_name[LV_MAX_IDENTIFIER];
+                    char display_name[LV_MAX_IDENTIFIER];
+                    int n1 = snprintf(hidden_name, sizeof(hidden_name),
+                                      "@classefn.%s.%s",
+                                      node->as.class_decl.name,
+                                      member->as.func_decl.name);
+                    int n2 = snprintf(display_name, sizeof(display_name),
+                                      "%s.%s",
+                                      node->as.class_decl.name,
+                                      member->as.func_decl.name);
+                    if (n1 < 0 || (size_t)n1 >= sizeof(hidden_name) ||
+                        n2 < 0 || (size_t)n2 >= sizeof(display_name)) {
+                        fprintf(stderr,
+                                "[LEVIATA][Compilador] Nome de método muito longo\n");
+                        c->had_error = 1;
+                        break;
+                    }
+
+                    if (!compile_function_global(c,
+                                                 hidden_name,
+                                                 display_name,
+                                                 member,
+                                                 1))
+                        break;
+
+                    emit_load_global_name(c, "@classe.metodo", member->line);
+                    emit_load_global_name(c, node->as.class_decl.name, member->line);
+                    emit_load_string(c, member->as.func_decl.name, member->line);
+                    emit_load_global_name(c, hidden_name, member->line);
+                    emit(c, OP_CALL, 3, member->line);
+                    emit(c, OP_POP, 0, member->line);
+                }
+            }
             break;
         }
 
