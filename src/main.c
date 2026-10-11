@@ -1,14 +1,12 @@
 /* ============================================================================
- * LEVIATA 3 - launcher, REPL e execução de arquivos .pt
+ * LEVIATA 3 - launcher e REPL
  * ============================================================================ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "leviata_lexer.h"
-#include "leviata_ast.h"
 #include "leviata_vm.h"
-#include "leviata_compiler.h"
 #include "leviata_stdlib.h"
 #include "leviata_ffi.h"
 #include "leviata_2d.h"
@@ -16,18 +14,17 @@
 #include "leviata_canon.h"
 #include "leviata_resources.h"
 #include "leviata_classes.h"
-
-AstNode *leviata_parse(const char *source, int *had_error);
+#include "leviata_runtime.h"
 
 static void print_banner(void) {
     printf("╔══════════════════════════════════════════════════════════╗\n");
     printf("║              LEVIATA v%d.%d.%d — Português              ║\n",
            LV_VERSION_MAJOR, LV_VERSION_MINOR, LV_VERSION_PATCH);
-    printf("║ VM | Bytecode | Raylib | World | Objetos | Classes     ║\n");
+    printf("║ VM | Bytecode | World | Objetos | Classes | Modulos    ║\n");
     printf("╚══════════════════════════════════════════════════════════╝\n\n");
 }
 
-static char *read_file(const char *path) {
+static char *read_file_for_tokens(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "[LEVIATA] Nao foi possivel abrir: %s\n", path);
@@ -41,50 +38,15 @@ static char *read_file(const char *path) {
     char *buf = (char*)malloc((size_t)size + 1);
     if (!buf) {
         fclose(f);
-        fprintf(stderr, "[LEVIATA] Sem memoria para carregar arquivo.\n");
         return NULL;
     }
-
-    size_t read_count = fread(buf, 1, (size_t)size, f);
-    buf[read_count] = '\0';
+    size_t count = fread(buf, 1, (size_t)size, f);
+    buf[count] = '\0';
     fclose(f);
     return buf;
 }
 
-static int execute_source(LvVM *vm, const char *source, int show_ast) {
-    int parse_error = 0;
-    AstNode *ast = leviata_parse(source, &parse_error);
-    if (!ast || parse_error) {
-        fprintf(stderr, "[LEVIATA] Erros de parse. Execucao cancelada.\n");
-        ast_free(ast);
-        return 0;
-    }
-
-    if (show_ast) {
-        printf("\n=== AST GERADA ===\n");
-        ast_print(ast, 0);
-        printf("==================\n\n");
-    }
-
-    Compiler compiler;
-    compiler_init(&compiler, vm, NULL);
-    Chunk chunk;
-    int ok = compiler_compile_program(&compiler, ast, &chunk);
-    ast_free(ast);
-    compiler_free(&compiler);
-
-    if (!ok) {
-        fprintf(stderr, "[LEVIATA] Erros de compilacao.\n");
-        chunk_free(&chunk);
-        return 0;
-    }
-
-    int result = vm_run_chunk(vm, &chunk);
-    chunk_free(&chunk);
-    return result;
-}
-
-static void run_repl(LvVM *vm) {
+static void run_repl(LvRuntime *rt, LvVM *vm) {
     printf("REPL Leviata — 'sair()' para encerrar\n\n");
     char line[4096];
     while (1) {
@@ -96,14 +58,14 @@ static void run_repl(LvVM *vm) {
         if (strcmp(line, "sair") == 0 || strcmp(line, "sair()") == 0) break;
         if (line[0] == '\0') continue;
         vm->had_error = 0;
-        execute_source(vm, line, 0);
+        leviata_execute_source(rt, vm, line, "<repl>", 0);
     }
     printf("\n[LEVIATA] Sessao REPL encerrada.\n");
 }
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.2.0\"\n"
+    "var versao = \"3.3.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
@@ -120,14 +82,11 @@ static const char *DEMO_PROGRAMA =
     "var saudacao = novo Saudacao()\n"
     "escreva(\"Classe:\", tipo(saudacao), saudacao.diga(\"Leviata\"))\n"
     "cena.mudar(\"demo\")\n"
-    "var entidade_demo = entidade.criar(\"demo\", 10, 20, 32, 32)\n"
-    "entidade.fisica(entidade_demo, 980, 2)\n"
-    "escreva(\"Entidade:\", entidade.nome(entidade_demo), \" fisica=\", entidade.tem(entidade_demo, \"fisica\"))\n"
     "escreva(\"Cena:\", cena.atual())\n";
 
-static void run_demo(LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.2 ===\n\n");
-    execute_source(vm, DEMO_PROGRAMA, 0);
+static void run_demo(LvRuntime *rt, LvVM *vm) {
+    printf("=== DEMONSTRACAO LEVIATA 3.3 ===\n\n");
+    leviata_execute_source(rt, vm, DEMO_PROGRAMA, "<demo>", 0);
     remove("leviata_demo.tmp");
 }
 
@@ -156,9 +115,10 @@ int main(int argc, char *argv[]) {
     print_banner();
 
     LvVM vm;
+    LvRuntime runtime;
     vm_init(&vm);
+    leviata_runtime_init(&runtime);
 
-    /* Implementação interna primeiro; superfície pública por último. */
     stdlib_register_all(&vm);
     ffi_register_runtime(&vm);
     leviata_2d_register_runtime(&vm);
@@ -170,30 +130,20 @@ int main(int argc, char *argv[]) {
 
     int exit_code = 0;
     if (argc < 2) {
-        run_repl(&vm);
+        run_repl(&runtime, &vm);
     } else if (strcmp(argv[1], "--demo") == 0) {
-        run_demo(&vm);
+        run_demo(&runtime, &vm);
     } else if (strcmp(argv[1], "--ast") == 0 && argc >= 3) {
-        char *src = read_file(argv[2]);
-        if (!src) exit_code = 1;
-        else {
-            exit_code = execute_source(&vm, src, 1) ? 0 : 1;
-            free(src);
-        }
+        exit_code = leviata_execute_file(&runtime, &vm, argv[2], 1) ? 0 : 1;
     } else if (strcmp(argv[1], "--tokens") == 0 && argc >= 3) {
-        char *src = read_file(argv[2]);
+        char *src = read_file_for_tokens(argv[2]);
         if (!src) exit_code = 1;
         else {
             demo_lexer(src);
             free(src);
         }
     } else if (argv[1][0] != '-') {
-        char *src = read_file(argv[1]);
-        if (!src) exit_code = 1;
-        else {
-            exit_code = execute_source(&vm, src, 0) ? 0 : 1;
-            free(src);
-        }
+        exit_code = leviata_execute_file(&runtime, &vm, argv[1], 0) ? 0 : 1;
     } else {
         print_usage();
         exit_code = 1;
