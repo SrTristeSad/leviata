@@ -1,0 +1,17 @@
+var segredo = "B"
+
+exportar funcao valor() {
+    retorne segredo
+}
+
+exportar classe Caixa {
+    var texto = ""
+
+    funcao iniciar(sufixo) {
+        este.texto = segredo + sufixo
+    }
+
+    funcao ler() {
+        retorne este.texto + segredo
+    }
+}
