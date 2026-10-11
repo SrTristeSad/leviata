@@ -27,3 +27,14 @@ jobs:
           ./leviata exemplos/jogo.pt
           ./leviata exemplos/motor2d.pt
           ./leviata exemplos/mundo.pt
+
+      - name: Run core regression suite
+        run: |
+          ./leviata testes/nucleo.pt | tee /tmp/leviata-core.log
+          grep -q "NUCLEO_OK" /tmp/leviata-core.log
+
+      - name: Build with sanitizers
+        run: make debug
+
+      - name: Run core regression with sanitizers
+        run: ./leviata_debug testes/nucleo.pt
