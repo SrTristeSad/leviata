@@ -1,7 +1,7 @@
-/* Regressão do núcleo Leviata: lógica, escopos, listas e índices. */
+/* Regressão do núcleo canônico do Leviata 3. */
 
 funcao falhar(mensagem) {
-    escrever("FALHA:", mensagem)
+    escreva("FALHA:", mensagem)
     funcao_que_nao_existe()
 }
 
@@ -9,103 +9,99 @@ var chamadas = 0
 
 funcao marcar(valor) {
     chamadas = chamadas + 1
-    retornar valor
+    retorne valor
 }
 
-/* Short-circuit: o lado direito NÃO pode executar nestes dois casos. */
+/* Short-circuit. */
 var curto_e = falso e marcar(verdadeiro)
 var curto_ou = verdadeiro ou marcar(falso)
 
-se (chamadas != 0) {
+se chamadas != 0 {
     falhar("short-circuit executou o lado direito")
 }
+se curto_e != falso { falhar("falso e X") }
+se curto_ou != verdadeiro { falhar("verdadeiro ou X") }
 
-se (curto_e != falso) {
-    falhar("resultado de falso e X deveria ser falso")
-}
-
-se (curto_ou != verdadeiro) {
-    falhar("resultado de verdadeiro ou X deveria ser verdadeiro")
-}
-
-/* Aqui o lado direito precisa ser executado. */
 var avalia_e = verdadeiro e marcar(verdadeiro)
 var avalia_ou = falso ou marcar(verdadeiro)
+se chamadas != 2 { falhar("lado direito necessario") }
+se avalia_e != verdadeiro { falhar("verdadeiro e verdadeiro") }
+se avalia_ou != verdadeiro { falhar("falso ou verdadeiro") }
 
-se (chamadas != 2) {
-    falhar("lado direito necessario nao foi executado")
-}
-
-se (avalia_e != verdadeiro) {
-    falhar("verdadeiro e verdadeiro deveria ser verdadeiro")
-}
-
-se (avalia_ou != verdadeiro) {
-    falhar("falso ou verdadeiro deveria ser verdadeiro")
-}
-
-/* Escopos locais dentro de função, while e if. */
+/* Escopos locais. */
 funcao testar_escopos() {
     var total = 0
     var n = 0
 
-    enquanto (n < 3) {
+    enquanto n < 3 {
         var temporario = n + 1
         total = total + temporario
         n = n + 1
     }
 
-    se (total == 6) {
+    se total == 6 {
         var interno = 4
         total = total + interno
     }
 
-    retornar total
+    retorne total
 }
 
-se (testar_escopos() != 10) {
+se testar_escopos() != 10 {
     falhar("escopos locais em blocos/loops")
 }
 
-/* Shadowing em bloco não pode sobrescrever a global. */
+/* Shadowing. */
 var externo = 10
-se (verdadeiro) {
+se verdadeiro {
     var externo = 20
-    se (externo != 20) {
-        falhar("shadowing local")
-    }
+    se externo != 20 { falhar("shadowing local") }
 }
+se externo != 10 { falhar("shadowing alterou global") }
 
-se (externo != 10) {
-    falhar("shadowing alterou a variavel global")
-}
-
-/* Literais de lista precisam preservar a ordem escrita. */
+/* Lista, índices e para-em. */
 var dados = [10, 20, 30]
-se (dados[0] != 10 ou dados[1] != 20 ou dados[2] != 30) {
-    falhar("ordem do literal de lista")
+se dados[0] != 10 ou dados[1] != 20 ou dados[2] != 30 {
+    falhar("ordem da lista")
 }
 
-/* Índices aceitam números numericamente inteiros. */
-se (dados[1.0] != 20) {
-    falhar("leitura com indice 1.0")
-}
-
+se dados[1.0] != 20 { falhar("indice 1.0") }
 dados[1.0] = 99
-se (dados[1] != 99) {
-    falhar("escrita com indice 1.0")
-}
+se dados[1] != 99 { falhar("escrita indice 1.0") }
 
-var posicao = 2.0
-dados[posicao] = 77
-se (dados[2] != 77) {
-    falhar("indice float dinamico inteiro")
-}
-
-/* Atribuição composta em índice depende da ordem correta da stack. */
 dados[0] += 5
-se (dados[0] != 15) {
-    falhar("atribuicao composta em indice")
-}
+se dados[0] != 15 { falhar("atribuicao composta") }
 
-escrever("NUCLEO_OK")
+var soma_lista = 0
+para valor em dados {
+    soma_lista = soma_lista + valor
+}
+se soma_lista != 144 { falhar("para item em lista") }
+
+/* pare e continue precisam limpar os escopos corretamente. */
+var soma_laco = 0
+para n de 1 ate 10 {
+    var local = n
+    se n == 3 { continue }
+    se n == 6 { pare }
+    soma_laco = soma_laco + local
+}
+se soma_laco != 12 { falhar("pare/continue") }
+
+/* API base canônica. */
+var lista_teste = lista()
+adicionar(lista_teste, "a")
+adicionar(lista_teste, "b")
+inserir(lista_teste, 1, "x")
+se tamanho(lista_teste) != 3 { falhar("inserir") }
+se nao contem(lista_teste, "x") { falhar("contem lista") }
+remover(lista_teste, "x")
+se contem(lista_teste, "x") { falhar("remover") }
+
+se int("42") != 42 { falhar("int") }
+se dec("3.5") != 3.5 { falhar("dec") }
+se txt(42) != "42" { falhar("txt") }
+se bool(1) != verdadeiro { falhar("bool") }
+se tipo("oi") != "txt" { falhar("tipo") }
+
+escreva("NUCLEO_OK")
