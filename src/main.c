@@ -153,6 +153,7 @@ int main(int argc, char *argv[]) {
     leviata_2d_register_runtime(&vm);
     leviata_world_register_runtime(&vm);
     leviata_canon_register(&vm);
+    leviata_canon_finalize(&vm);
 
     int exit_code = 0;
     if (argc < 2) {
