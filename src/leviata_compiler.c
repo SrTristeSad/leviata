@@ -255,9 +255,16 @@ static void compile_expr(Compiler *c, AstNode *node) {
             break;
 
         case AST_LIST_LIT:
-            for (int i = 0; i < node->as.list_lit.count; i++)
+            /*
+             * Cria a lista vazia e adiciona cada item na ordem da fonte.
+             * Além de preservar [a,b,c] como [a,b,c], isso preserva também
+             * a ordem de avaliação de expressões com efeitos colaterais.
+             */
+            emit(c, OP_NEW_LIST, 0, node->line);
+            for (int i = 0; i < node->as.list_lit.count; i++) {
                 compile_expr(c, node->as.list_lit.items[i]);
-            emit(c, OP_NEW_LIST, node->as.list_lit.count, node->line);
+                emit(c, OP_LIST_PUSH, 0, node->line);
+            }
             break;
 
         default:
