@@ -51,6 +51,21 @@ jobs:
           ./leviata testes/classes.pt | tee /tmp/leviata-classes.log
           grep -q "CLASSES_OK" /tmp/leviata-classes.log
 
+      - name: Run module regression suite
+        run: |
+          ./leviata testes/modulos_main.pt | tee /tmp/leviata-modules.log
+          grep -q "MODULOS_OK" /tmp/leviata-modules.log
+
+          if ./leviata testes/modulos/ciclo_a.pt; then
+            echo "ERRO: ciclo de modulos deveria falhar"
+            exit 1
+          fi
+
+          if ./leviata testes/modulos_import_local.pt; then
+            echo "ERRO: usar dentro de funcao deveria falhar"
+            exit 1
+          fi
+
       - name: Enforce Leviata 3 canonical surface
         run: |
           cat > /tmp/leviata-legado.pt <<'EOF'
@@ -78,4 +93,5 @@ jobs:
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
+          ./leviata_debug testes/modulos_main.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
