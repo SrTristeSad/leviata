@@ -347,6 +347,20 @@ static int ast_contains_module_directive(AstNode *node) {
     return 0;
 }
 
+/* Substitui uma diretiva consumida por `nulo` sem perder os filhos da AST.
+ * A versão inicial alterava apenas node->type e tornava callee/args inalcançáveis,
+ * o que o LeakSanitizer detectou. */
+static void consume_program_stmt(AstNode *program, int index) {
+    if (!program || program->type != AST_PROGRAM ||
+        index < 0 || index >= program->as.program.count)
+        return;
+
+    AstNode *old = program->as.program.stmts[index];
+    int line = old ? old->line : 1;
+    program->as.program.stmts[index] = ast_alloc(AST_NULL_LIT, line);
+    ast_free(old);
+}
+
 static int runtime_load_module(LvRuntime *rt, LvVM *vm, const char *path);
 
 static int process_imports(LvRuntime *rt,
@@ -365,7 +379,7 @@ static int process_imports(LvRuntime *rt,
                            resolved, sizeof(resolved));
             if (!runtime_load_module(rt, vm, resolved))
                 return 0;
-            stmt->type = AST_NULL_LIT;
+            consume_program_stmt(program, i);
             continue;
         }
 
@@ -376,12 +390,18 @@ static int process_imports(LvRuntime *rt,
                 fprintf(stderr, "[LEVIATA][Modulo] Marcador interno de exportacao invalido\n");
                 return 0;
             }
-            if (!exports_add(rt, origin ? origin : "<fonte>",
-                             stmt->as.call.args[0]->as.str_lit.value)) {
+
+            char exported_name[LV_MAX_IDENTIFIER];
+            strncpy(exported_name,
+                    stmt->as.call.args[0]->as.str_lit.value,
+                    LV_MAX_IDENTIFIER - 1);
+            exported_name[LV_MAX_IDENTIFIER - 1] = '\0';
+
+            if (!exports_add(rt, origin ? origin : "<fonte>", exported_name)) {
                 fprintf(stderr, "[LEVIATA][Modulo] Falha ao registrar exportacao\n");
                 return 0;
             }
-            stmt->type = AST_NULL_LIT;
+            consume_program_stmt(program, i);
             continue;
         }
 
@@ -393,14 +413,22 @@ static int process_imports(LvRuntime *rt,
                 return 0;
             }
 
+            char requested[LV_MODULE_PATH_MAX];
+            char alias[LV_MAX_IDENTIFIER];
+            strncpy(requested,
+                    stmt->as.call.args[0]->as.str_lit.value,
+                    LV_MODULE_PATH_MAX - 1);
+            requested[LV_MODULE_PATH_MAX - 1] = '\0';
+            strncpy(alias,
+                    stmt->as.call.args[1]->as.str_lit.value,
+                    LV_MAX_IDENTIFIER - 1);
+            alias[LV_MAX_IDENTIFIER - 1] = '\0';
+
             char resolved[LV_MODULE_PATH_MAX];
-            resolve_import(origin,
-                           stmt->as.call.args[0]->as.str_lit.value,
-                           resolved, sizeof(resolved));
-            if (!bind_alias(rt, vm, resolved,
-                            stmt->as.call.args[1]->as.str_lit.value))
+            resolve_import(origin, requested, resolved, sizeof(resolved));
+            if (!bind_alias(rt, vm, resolved, alias))
                 return 0;
-            stmt->type = AST_NULL_LIT;
+            consume_program_stmt(program, i);
             continue;
         }
 
