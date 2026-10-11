@@ -1,0 +1,21 @@
+/* Biblioteca para regressão de exportar/alias do Leviata 3.6. */
+
+exportar const versao_modulo = "3.6"
+
+exportar funcao dobro(valor) {
+    retorne valor * 2
+}
+
+exportar classe Caixa {
+    var valor = 0
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
+
+    funcao dobro() {
+        retorne este.valor * 2
+    }
+}
+
+var secreto = 999
