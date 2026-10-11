@@ -1,7 +1,7 @@
-/* Exemplo do motor 2D avancado do Leviata */
+/* Motor 2D no Leviata 3 */
 
-jogo_iniciar("Leviata Motor 2D", 960, 540, 60)
-cena_mudar("jogo")
+jogo.iniciar("Leviata Motor 2D", 960, 540, 60)
+cena.mudar("jogo")
 
 var jogador_x = 100
 var jogador_y = 100
@@ -13,45 +13,45 @@ var parede_w = 90
 var parede_h = 260
 var velocidade = 220
 
-jogo_camera_configurar(jogador_x, jogador_y, 1, 0, 480, 270)
+camera.configurar(jogador_x, jogador_y, 1, 0, 480, 270)
 
-enquanto (nao jogo_deve_fechar()) {
-    var dt = jogo_delta()
+enquanto nao jogo.deve_fechar() {
+    var dt = jogo.delta()
     var novo_x = jogador_x
     var novo_y = jogador_y
 
-    se (jogo_tecla(65)) { novo_x = novo_x - velocidade * dt }
-    se (jogo_tecla(68)) { novo_x = novo_x + velocidade * dt }
-    se (jogo_tecla(87)) { novo_y = novo_y - velocidade * dt }
-    se (jogo_tecla(83)) { novo_y = novo_y + velocidade * dt }
+    se teclado.pressionada("A") { novo_x = novo_x - velocidade * dt }
+    se teclado.pressionada("D") { novo_x = novo_x + velocidade * dt }
+    se teclado.pressionada("W") { novo_y = novo_y - velocidade * dt }
+    se teclado.pressionada("S") { novo_y = novo_y + velocidade * dt }
 
-    se (nao jogo_colisao_retangulos(novo_x, jogador_y, jogador_w, jogador_h,
-                                     parede_x, parede_y, parede_w, parede_h)) {
+    se nao colisao.retangulos(novo_x, jogador_y, jogador_w, jogador_h,
+                              parede_x, parede_y, parede_w, parede_h) {
         jogador_x = novo_x
     }
 
-    se (nao jogo_colisao_retangulos(jogador_x, novo_y, jogador_w, jogador_h,
-                                     parede_x, parede_y, parede_w, parede_h)) {
+    se nao colisao.retangulos(jogador_x, novo_y, jogador_w, jogador_h,
+                              parede_x, parede_y, parede_w, parede_h) {
         jogador_y = novo_y
     }
 
-    jogo_camera_seguir(jogador_x + jogador_w / 2, jogador_y + jogador_h / 2)
+    camera.seguir(jogador_x + jogador_w / 2, jogador_y + jogador_h / 2)
 
-    jogo_iniciar_frame()
-    jogo_limpar_fundo(18, 21, 30)
+    jogo.quadro()
+    desenho.fundo(18, 21, 30)
 
-    jogo_camera_iniciar()
-    jogo_desenhar_retangulo(-500, -500, 2000, 2000, 28, 36, 48)
-    jogo_desenhar_retangulo(parede_x, parede_y, parede_w, parede_h, 210, 90, 90)
-    jogo_desenhar_retangulo(jogador_x, jogador_y, jogador_w, jogador_h, 80, 185, 255)
-    jogo_camera_finalizar()
+    camera.iniciar()
+    desenho.retangulo(-500, -500, 2000, 2000, 28, 36, 48)
+    desenho.retangulo(parede_x, parede_y, parede_w, parede_h, 210, 90, 90)
+    desenho.retangulo(jogador_x, jogador_y, jogador_w, jogador_h, 80, 185, 255)
+    camera.finalizar()
 
-    jogo_desenhar_texto("Leviata 2D - WASD", 24, 22, 26, 240, 240, 245)
-    jogo_desenhar_texto("Camera + colisao + cenas", 24, 55, 20, 180, 190, 205)
+    desenho.texto("Leviata 3 - WASD", 24, 22, 26, 240, 240, 245)
+    desenho.texto("Camera + colisao + cenas", 24, 55, 20, 180, 190, 205)
 
-    jogo_finalizar_frame()
+    jogo.mostrar()
 }
 
-escrever("Cena atual:", cena_atual())
-escrever("Teste AABB:", jogo_colisao_retangulos(0, 0, 10, 10, 5, 5, 10, 10))
-jogo_fechar()
+escreva("Cena atual:", cena.atual())
+escreva("Teste AABB:", colisao.retangulos(0, 0, 10, 10, 5, 5, 10, 10))
+jogo.fechar()
