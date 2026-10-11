@@ -7,11 +7,13 @@
 #include <stdlib.h>
 #include "leviata_vm.h"
 
-/*
- * Registra a API pública do Leviata 3 depois da stdlib, FFI, 2D e World.
- * Implementações internas podem manter nomes históricos em C; o código .pt
- * enxerga somente a superfície canônica registrada aqui.
- */
+/* Registra aliases e funções públicas canônicas. */
 void leviata_canon_register(LvVM *vm);
+
+/*
+ * Reconstrói a tabela global depois da migração, removendo nomes legados de
+ * forma segura mesmo com colisões de hash do open addressing.
+ */
+void leviata_canon_finalize(LvVM *vm);
 
 #endif /* LEVIATA_CANON_H */
