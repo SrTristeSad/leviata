@@ -1,24 +1,22 @@
-/* Leviata 2.3 - entidades, fisica, mapa externo e camera limitada */
+/* Leviata 3 - entidades, física, mapa externo e câmera */
 
-var mapa = mapa_carregar("exemplos/mapas/mundo.csv")
-var largura = mapa_largura()
-var altura = mapa_altura()
+var mundo = mapa.carregar("exemplos/mapas/mundo.csv")
+var largura = mapa.largura()
+var altura = mapa.altura()
 var tile = 32
 
-escrever("Mapa carregado:", largura, "x", altura)
+escreva("Mapa carregado:", largura, "x", altura)
 
-jogo_iniciar("Leviata World 2.3", 960, 540, 60)
-jogo_camera_configurar(160, 120, 1, 0)
-jogo_camera_limites(0, 0, largura * tile, altura * tile)
+jogo.iniciar("Leviata World 3", 960, 540, 60)
+camera.configurar(160, 120, 1, 0)
+camera.limites(0, 0, largura * tile, altura * tile)
 
-var jogador = entidade_criar("jogador", 96, 80, 26, 30)
-entidade_fisica(jogador, 980, 5)
-entidade_colisor(jogador, verdadeiro)
+var jogador = entidade.criar("jogador", 96, 80, 26, 30)
+entidade.fisica(jogador, 980, 5)
+entidade.colisor(jogador, verdadeiro)
 
-cena_mudar("mundo")
-
-var quanto = entidade_quantidade()
-escrever("Entidades ativas:", quanto)
+cena.mudar("mundo")
+escreva("Entidades ativas:", entidade.quantidade())
 
 var dt = 0
 var vx = 0
@@ -26,44 +24,41 @@ var vy = 0
 var px = 0
 var py = 0
 
-enquanto (nao jogo_deve_fechar()) {
-    dt = jogo_delta()
+enquanto nao jogo.deve_fechar() {
+    dt = jogo.delta()
     vx = 0
 
-    se (jogo_tecla(65)) { vx = -180 }
-    se (jogo_tecla(68)) { vx = 180 }
+    se teclado.pressionada("A") { vx = -180 }
+    se teclado.pressionada("D") { vx = 180 }
 
-    vy = entidade_vy(jogador)
-    se (jogo_tecla_apertada(32)) {
-        se (entidade_no_chao(jogador)) {
-            vy = -430
-        }
+    vy = entidade.vy(jogador)
+    se teclado.apertada("espaco") e entidade.no_chao(jogador) {
+        vy = -430
     }
 
-    entidade_velocidade(jogador, vx, vy)
-    entidade_atualizar_tilemap(jogador, dt, mapa, largura, tile, tile, 0, 0)
+    entidade.velocidade(jogador, vx, vy)
+    entidade.atualizar_mapa(jogador, dt, mundo, largura, tile, tile, 0, 0)
 
-    px = entidade_x(jogador)
-    py = entidade_y(jogador)
-    jogo_camera_seguir(px + 13, py + 15)
+    px = entidade.x(jogador)
+    py = entidade.y(jogador)
+    camera.seguir(px + 13, py + 15)
 
-    jogo_iniciar_frame()
-    jogo_limpar_fundo(18, 22, 32)
-    jogo_camera_iniciar()
+    jogo.quadro()
+    desenho.fundo(18, 22, 32)
+    camera.iniciar()
 
-    /* Geometria visual correspondente ao mapa externo de exemplo. */
-    jogo_desenhar_retangulo(0, 288, 640, 32, 65, 76, 95)
-    jogo_desenhar_retangulo(384, 96, 96, 32, 65, 76, 95)
-    jogo_desenhar_retangulo(384, 128, 32, 96, 65, 76, 95)
-    jogo_desenhar_retangulo(448, 128, 32, 96, 65, 76, 95)
-    jogo_desenhar_retangulo(384, 224, 96, 32, 65, 76, 95)
+    desenho.retangulo(0, 288, 640, 32, 65, 76, 95)
+    desenho.retangulo(384, 96, 96, 32, 65, 76, 95)
+    desenho.retangulo(384, 128, 32, 96, 65, 76, 95)
+    desenho.retangulo(448, 128, 32, 96, 65, 76, 95)
+    desenho.retangulo(384, 224, 96, 32, 65, 76, 95)
 
-    entidade_desenhar(jogador, 80, 190, 255)
-    jogo_camera_finalizar()
+    entidade.desenhar(jogador, 80, 190, 255)
+    camera.finalizar()
 
-    jogo_desenhar_texto("A/D move | Espaco pula | mapa externo + fisica", 22, 22, 22, 235, 240, 250)
-    jogo_desenhar_texto("Cena: " + cena_atual(), 22, 50, 18, 180, 190, 210)
-    jogo_finalizar_frame()
+    desenho.texto("A/D move | Espaco pula | mapa externo + fisica", 22, 22, 22, 235, 240, 250)
+    desenho.texto("Cena: " + cena.atual(), 22, 50, 18, 180, 190, 210)
+    jogo.mostrar()
 }
 
-jogo_fechar()
+jogo.fechar()
