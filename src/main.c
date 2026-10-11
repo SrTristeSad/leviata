@@ -1,6 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA v2.4
- * Linguagem PT - launcher, REPL e execucao de arquivos .pt
+ * LEVIATA 3 - launcher, REPL e execução de arquivos .pt
  * ============================================================================ */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,14 +13,15 @@
 #include "leviata_ffi.h"
 #include "leviata_2d.h"
 #include "leviata_world.h"
+#include "leviata_canon.h"
 
 AstNode *leviata_parse(const char *source, int *had_error);
 
 static void print_banner(void) {
     printf("╔══════════════════════════════════════════════════════════╗\n");
-    printf("║       MOTOR LEVIATA v%d.%d.%d — Linguagem PT               ║\n",
+    printf("║              LEVIATA v%d.%d.%d — Português              ║\n",
            LV_VERSION_MAJOR, LV_VERSION_MINOR, LV_VERSION_PATCH);
-    printf("║ VM | Raylib | World | Sprites | Gatilhos | Fisica       ║\n");
+    printf("║  VM | Bytecode | Raylib | World | API canônica         ║\n");
     printf("╚══════════════════════════════════════════════════════════╝\n\n");
 }
 
@@ -42,6 +42,7 @@ static char *read_file(const char *path) {
         fprintf(stderr, "[LEVIATA] Sem memoria para carregar arquivo.\n");
         return NULL;
     }
+
     size_t read_count = fread(buf, 1, (size_t)size, f);
     buf[read_count] = '\0';
     fclose(f);
@@ -82,10 +83,10 @@ static int execute_source(LvVM *vm, const char *source, int show_ast) {
 }
 
 static void run_repl(LvVM *vm) {
-    printf("REPL da Linguagem PT — 'sair()' para encerrar\n\n");
+    printf("REPL Leviata — 'sair()' para encerrar\n\n");
     char line[4096];
     while (1) {
-        printf("PT> ");
+        printf("LV> ");
         fflush(stdout);
         if (!fgets(line, sizeof(line), stdin)) break;
         size_t len = strlen(line);
@@ -99,21 +100,23 @@ static void run_repl(LvVM *vm) {
 }
 
 static const char *DEMO_PROGRAMA =
-    "var nome = \"Motor Leviata\"\n"
-    "var versao = \"2.4.0\"\n"
-    "escrever(\"Sistema:\", nome, \"v\" + versao)\n"
-    "escrever(\"Raiz de 144 =\", raiz(144))\n"
+    "var nome = \"Leviata\"\n"
+    "var versao = \"3.0.0\"\n"
+    "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
+    "escreva(\"Raiz de 144 =\", raiz(144))\n"
     "var notas = [8, 9, 7, 10]\n"
-    "lista_adicionar(notas, 9)\n"
-    "escrever(\"Itens na lista:\", tamanho(notas))\n"
-    "cena_mudar(\"demo\")\n"
-    "var entidade_demo = entidade_criar(\"demo\", 10, 20, 32, 32)\n"
-    "entidade_fisica(entidade_demo, 980, 2)\n"
-    "escrever(\"Entidade:\", entidade_nome(entidade_demo), \" componentes fisica=\", entidade_tem_componente(entidade_demo, \"fisica\"))\n"
-    "escrever(\"Motor 2D/World ativo. Cena:\", cena_atual())\n";
+    "adicionar(notas, 9)\n"
+    "var soma = 0\n"
+    "para nota em notas { soma = soma + nota }\n"
+    "escreva(\"Itens:\", tamanho(notas), \" soma:\", soma)\n"
+    "cena.mudar(\"demo\")\n"
+    "var entidade_demo = entidade.criar(\"demo\", 10, 20, 32, 32)\n"
+    "entidade.fisica(entidade_demo, 980, 2)\n"
+    "escreva(\"Entidade:\", entidade.nome(entidade_demo), \" fisica=\", entidade.tem(entidade_demo, \"fisica\"))\n"
+    "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3 ===\n\n");
     execute_source(vm, DEMO_PROGRAMA, 0);
 }
 
@@ -124,7 +127,8 @@ static void demo_lexer(const char *source) {
     Token tok;
     do {
         tok = lexer_next(&lex);
-        printf("[%3d:%2d] %-16s '%s'\n", tok.line, tok.col, token_type_name(tok.type), tok.lexeme);
+        printf("[%3d:%2d] %-16s '%s'\n",
+               tok.line, tok.col, token_type_name(tok.type), tok.lexeme);
     } while (tok.type != TOK_EOF && tok.type != TOK_ERROR);
 }
 
@@ -142,10 +146,13 @@ int main(int argc, char *argv[]) {
 
     LvVM vm;
     vm_init(&vm);
+
+    /* Implementação interna primeiro; superfície pública canônica por último. */
     stdlib_register_all(&vm);
     ffi_register_runtime(&vm);
     leviata_2d_register_runtime(&vm);
     leviata_world_register_runtime(&vm);
+    leviata_canon_register(&vm);
 
     int exit_code = 0;
     if (argc < 2) {
@@ -155,15 +162,24 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[1], "--ast") == 0 && argc >= 3) {
         char *src = read_file(argv[2]);
         if (!src) exit_code = 1;
-        else { exit_code = execute_source(&vm, src, 1) ? 0 : 1; free(src); }
+        else {
+            exit_code = execute_source(&vm, src, 1) ? 0 : 1;
+            free(src);
+        }
     } else if (strcmp(argv[1], "--tokens") == 0 && argc >= 3) {
         char *src = read_file(argv[2]);
         if (!src) exit_code = 1;
-        else { demo_lexer(src); free(src); }
+        else {
+            demo_lexer(src);
+            free(src);
+        }
     } else if (argv[1][0] != '-') {
         char *src = read_file(argv[1]);
         if (!src) exit_code = 1;
-        else { exit_code = execute_source(&vm, src, 0) ? 0 : 1; free(src); }
+        else {
+            exit_code = execute_source(&vm, src, 0) ? 0 : 1;
+            free(src);
+        }
     } else {
         print_usage();
         exit_code = 1;
