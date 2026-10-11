@@ -14,6 +14,7 @@
 #include "leviata_canon.h"
 #include "leviata_resources.h"
 #include "leviata_classes.h"
+#include "leviata_super.h"
 #include "leviata_runtime.h"
 
 static void print_banner(void) {
@@ -65,7 +66,7 @@ static void run_repl(LvRuntime *rt, LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.3.0\"\n"
+    "var versao = \"3.5.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
@@ -75,9 +76,12 @@ static const char *DEMO_PROGRAMA =
     "var config = arquivo(\"leviata_demo.tmp\")\n"
     "config.escreva(\"objetos=ok\")\n"
     "escreva(\"Recurso:\", tipo(config), config.caminho, config.leia())\n"
-    "classe Saudacao {\n"
+    "classe Base {\n"
     "  var texto = \"Oi\"\n"
     "  funcao diga(nome_alvo) { retorne este.texto + \" \" + nome_alvo }\n"
+    "}\n"
+    "classe Saudacao herda Base {\n"
+    "  funcao diga(nome_alvo) { retorne super.diga(nome_alvo) + \"!\" }\n"
     "}\n"
     "var saudacao = novo Saudacao()\n"
     "escreva(\"Classe:\", tipo(saudacao), saudacao.diga(\"Leviata\"))\n"
@@ -85,7 +89,7 @@ static const char *DEMO_PROGRAMA =
     "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvRuntime *rt, LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.3 ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3.5 ===\n\n");
     leviata_execute_source(rt, vm, DEMO_PROGRAMA, "<demo>", 0);
     remove("leviata_demo.tmp");
 }
@@ -126,6 +130,7 @@ int main(int argc, char *argv[]) {
     leviata_canon_register(&vm);
     leviata_resources_register(&vm);
     leviata_classes_register(&vm);
+    leviata_super_register(&vm);
     leviata_canon_finalize(&vm);
 
     int exit_code = 0;
