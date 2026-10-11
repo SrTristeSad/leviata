@@ -1,57 +1,53 @@
-/* Leviata 2.4 - entidade, NPC, gatilho e camera suave. */
+/* Leviata 3 - entidade, NPC, gatilho e câmera suave */
 
-jogo_iniciar("Leviata Gameplay 2.4", 960, 540, 60)
+jogo.iniciar("Leviata Gameplay 3", 960, 540, 60)
 
-var jogador = entidade_criar("jogador", 100, 220, 32, 48)
-var npc = entidade_criar("guarda", 430, 220, 36, 48)
-var zona = entidade_criar("zona_da_porta", 380, 180, 140, 120)
+var jogador = entidade.criar("jogador", 100, 220, 32, 48)
+var npc = entidade.criar("guarda", 430, 220, 36, 48)
+var zona = entidade.criar("zona_da_porta", 380, 180, 140, 120)
 
-entidade_gatilho(zona, verdadeiro)
-entidade_colisor(npc, verdadeiro)
+entidade.gatilho(zona, verdadeiro)
+entidade.colisor(npc, verdadeiro)
 
-jogo_camera_configurar(100, 220, 1, 0)
-jogo_camera_suavidade(7)
-jogo_camera_limites(0, 0, 1600, 900)
+camera.configurar(100, 220, 1, 0)
+camera.suavidade(7)
+camera.limites(0, 0, 1600, 900)
 
 var mensagem = "Chegue perto do guarda"
 
-/* O backend sem Raylib executa um frame; com Raylib vira o loop real. */
-enquanto (nao jogo_deve_fechar()) {
-    var dt = jogo_delta()
+enquanto nao jogo.deve_fechar() {
+    var dt = jogo.delta()
     var vx = 0
 
-    se (jogo_tecla(65)) { vx = -220 }
-    se (jogo_tecla(68)) { vx = 220 }
+    se teclado.pressionada("A") { vx = -220 }
+    se teclado.pressionada("D") { vx = 220 }
 
-    entidade_velocidade(jogador, vx, 0)
-    entidade_atualizar(jogador, dt)
+    entidade.velocidade(jogador, vx, 0)
+    entidade.atualizar(jogador, dt)
 
-    se (entidade_colide(jogador, zona)) {
+    se entidade.colide(jogador, zona) {
         mensagem = "Voce entrou na zona do guarda"
     } senao {
         mensagem = "Chegue perto do guarda"
     }
 
-    var px = entidade_x(jogador)
-    var py = entidade_y(jogador)
-    jogo_camera_seguir(px + 16, py + 24)
+    var px = entidade.x(jogador)
+    var py = entidade.y(jogador)
+    camera.seguir(px + 16, py + 24)
 
-    jogo_iniciar_frame()
-    jogo_limpar_fundo(18, 22, 32)
+    jogo.quadro()
+    desenho.fundo(18, 22, 32)
 
-    jogo_camera_iniciar()
-    jogo_desenhar_retangulo(0, 268, 1600, 40, 60, 72, 86)
+    camera.iniciar()
+    desenho.retangulo(0, 268, 1600, 40, 60, 72, 86)
+    desenho.retangulo(380, 180, 140, 120, 45, 80, 100, 80)
+    entidade.desenhar(jogador, 80, 190, 255)
+    entidade.desenhar(npc, 240, 180, 70)
+    camera.finalizar()
 
-    /* Zona de trigger, apenas visual para o exemplo. */
-    jogo_desenhar_retangulo(380, 180, 140, 120, 45, 80, 100, 80)
-
-    entidade_desenhar(jogador, 80, 190, 255)
-    entidade_desenhar(npc, 240, 180, 70)
-    jogo_camera_finalizar()
-
-    jogo_desenhar_texto("A/D move", 22, 22, 22, 235, 240, 250)
-    jogo_desenhar_texto(mensagem, 22, 52, 20, 190, 210, 235)
-    jogo_finalizar_frame()
+    desenho.texto("A/D move", 22, 22, 22, 235, 240, 250)
+    desenho.texto(mensagem, 22, 52, 20, 190, 210, 235)
+    jogo.mostrar()
 }
 
-jogo_fechar()
+jogo.fechar()
