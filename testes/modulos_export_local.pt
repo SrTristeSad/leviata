@@ -1,0 +1,5 @@
+funcao teste() {
+    exportar var interno = 1
+}
+
+teste()
