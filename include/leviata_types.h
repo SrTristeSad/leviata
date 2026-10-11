@@ -36,8 +36,8 @@ typedef enum {
     LV_TYPE_OBJECT
 } LvType;
 
-/* Objetos nativos mantêm recursos leves da biblioteca padrão.
- * Texturas/áudio pesados continuam pertencendo ao backend e aos caches dele. */
+/* Objetos nativos leves. Texturas e buffers de áudio continuam pertencendo
+ * ao backend/caches; o valor da VM guarda só metadados estáveis. */
 typedef enum {
     LV_OBJECT_GENERIC = 0,
     LV_OBJECT_IMAGE,
@@ -100,7 +100,7 @@ struct LvObject {
             int arity;
         } native;
 
-        LvNativeObjectData *object;
+        LvNativeObjectData object;
     } as;
 };
 
