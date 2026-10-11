@@ -8,11 +8,12 @@
 #include <stddef.h>
 
 #define LV_VERSION_MAJOR  3
-#define LV_VERSION_MINOR  0
+#define LV_VERSION_MINOR  1
 #define LV_VERSION_PATCH  0
 
 #define LV_MAX_IDENTIFIER  128
 #define LV_MAX_STRING      4096
+#define LV_RESOURCE_PATH_MAX 512
 #define LV_HASHMAP_SIZE    4096
 #define LV_GC_THRESHOLD    256
 #define LV_STACK_MAX       1024
@@ -34,6 +35,23 @@ typedef enum {
     LV_TYPE_NATIVE,
     LV_TYPE_OBJECT
 } LvType;
+
+/* Objetos nativos mantêm recursos leves da biblioteca padrão.
+ * Texturas/áudio pesados continuam pertencendo ao backend e aos caches dele. */
+typedef enum {
+    LV_OBJECT_GENERIC = 0,
+    LV_OBJECT_IMAGE,
+    LV_OBJECT_SOUND,
+    LV_OBJECT_FILE
+} LvObjectKind;
+
+typedef struct {
+    LvObjectKind kind;
+    char path[LV_RESOURCE_PATH_MAX];
+    double volume;
+    int width;
+    int height;
+} LvNativeObjectData;
 
 struct LvObject;
 struct LvVM;
@@ -81,6 +99,8 @@ struct LvObject {
             LvNativeFn fn;
             int arity;
         } native;
+
+        LvNativeObjectData *object;
     } as;
 };
 
