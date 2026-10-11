@@ -1,0 +1,57 @@
+/* Leviata 2.4 - entidade, NPC, gatilho e camera suave. */
+
+jogo_iniciar("Leviata Gameplay 2.4", 960, 540, 60)
+
+var jogador = entidade_criar("jogador", 100, 220, 32, 48)
+var npc = entidade_criar("guarda", 430, 220, 36, 48)
+var zona = entidade_criar("zona_da_porta", 380, 180, 140, 120)
+
+entidade_gatilho(zona, verdadeiro)
+entidade_colisor(npc, verdadeiro)
+
+jogo_camera_configurar(100, 220, 1, 0)
+jogo_camera_suavidade(7)
+jogo_camera_limites(0, 0, 1600, 900)
+
+var mensagem = "Chegue perto do guarda"
+
+/* O backend sem Raylib executa um frame; com Raylib vira o loop real. */
+enquanto (nao jogo_deve_fechar()) {
+    var dt = jogo_delta()
+    var vx = 0
+
+    se (jogo_tecla(65)) { vx = -220 }
+    se (jogo_tecla(68)) { vx = 220 }
+
+    entidade_velocidade(jogador, vx, 0)
+    entidade_atualizar(jogador, dt)
+
+    se (entidade_colide(jogador, zona)) {
+        mensagem = "Voce entrou na zona do guarda"
+    } senao {
+        mensagem = "Chegue perto do guarda"
+    }
+
+    var px = entidade_x(jogador)
+    var py = entidade_y(jogador)
+    jogo_camera_seguir(px + 16, py + 24)
+
+    jogo_iniciar_frame()
+    jogo_limpar_fundo(18, 22, 32)
+
+    jogo_camera_iniciar()
+    jogo_desenhar_retangulo(0, 268, 1600, 40, 60, 72, 86)
+
+    /* Zona de trigger, apenas visual para o exemplo. */
+    jogo_desenhar_retangulo(380, 180, 140, 120, 45, 80, 100, 80)
+
+    entidade_desenhar(jogador, 80, 190, 255)
+    entidade_desenhar(npc, 240, 180, 70)
+    jogo_camera_finalizar()
+
+    jogo_desenhar_texto("A/D move", 22, 22, 22, 235, 240, 250)
+    jogo_desenhar_texto(mensagem, 22, 52, 20, 190, 210, 235)
+    jogo_finalizar_frame()
+}
+
+jogo_fechar()
