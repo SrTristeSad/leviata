@@ -1,93 +1,61 @@
-/* Regressão da camada World/GamePlay. */
+/* Regressão da camada World/GamePlay no Leviata 3. */
 
 funcao falhar(mensagem) {
-    escrever("FALHA_GAMEPLAY:", mensagem)
+    escreva("FALHA_GAMEPLAY:", mensagem)
     funcao_que_nao_existe()
 }
 
-var jogador = entidade_criar("jogador_teste", 0, 0, 16, 16)
-var porta = entidade_criar("porta_teste", 8, 0, 16, 16)
+var jogador = entidade.criar("jogador_teste", 0, 0, 16, 16)
+var porta = entidade.criar("porta_teste", 8, 0, 16, 16)
 
-se (jogador == 0 ou porta == 0) {
-    falhar("criacao de entidade")
-}
+se jogador == 0 ou porta == 0 { falhar("criacao de entidade") }
+se entidade.buscar("jogador_teste") != jogador { falhar("busca por nome") }
 
-se (entidade_buscar("jogador_teste") != jogador) {
-    falhar("busca por nome")
-}
+entidade.gatilho(porta, verdadeiro)
+se nao entidade.tem(porta, "gatilho") { falhar("componente gatilho") }
+se nao entidade.colide(jogador, porta) { falhar("colisao entidade-entidade") }
 
-entidade_gatilho(porta, verdadeiro)
-se (nao entidade_tem_componente(porta, "gatilho")) {
-    falhar("componente gatilho")
-}
+entidade.posicionar(porta, 100, 0)
+se entidade.colide(jogador, porta) { falhar("colisao falsa positiva") }
 
-se (nao entidade_colide(jogador, porta)) {
-    falhar("colisao entidade-entidade")
-}
+var distancia = entidade.distancia(jogador, porta)
+se distancia != 100 { falhar("distancia entre centros") }
 
-entidade_posicionar(porta, 100, 0)
-se (entidade_colide(jogador, porta)) {
-    falhar("colisao falsa positiva")
-}
-
-var distancia = entidade_distancia(jogador, porta)
-se (distancia != 100) {
-    falhar("distancia entre centros")
-}
-
-entidade_tamanho(jogador, 32, 24)
-se (entidade_x(jogador) != 0 ou entidade_y(jogador) != 0) {
+entidade.tamanho(jogador, 32, 24)
+se entidade.x(jogador) != 0 ou entidade.y(jogador) != 0 {
     falhar("redimensionamento alterou posicao")
 }
 
-/* No backend sem Raylib a textura é simulada, permitindo testar o componente. */
-se (nao entidade_sprite(jogador, "teste_spritesheet.png", 16, 16, 4, 8, 0, 1)) {
+se nao entidade.sprite(jogador, "teste_spritesheet.png", 16, 16, 4, 8, 0, 1) {
     falhar("criacao do componente sprite")
 }
+se nao entidade.tem(jogador, "sprite") { falhar("componente sprite") }
 
-se (nao entidade_tem_componente(jogador, "sprite")) {
-    falhar("introspeccao do componente sprite")
-}
+entidade.atualizar(jogador, 0.2)
+se entidade.frame(jogador) != 1 { falhar("avanco da animacao") }
 
-entidade_atualizar(jogador, 0.2)
-se (entidade_animacao_frame(jogador) != 1) {
-    falhar("avanco da animacao")
-}
+entidade.inverter_sprite_x(jogador, verdadeiro)
+entidade.animar(jogador, falso)
+var quadro = entidade.frame(jogador)
+entidade.atualizar(jogador, 0.2)
+se entidade.frame(jogador) != quadro { falhar("pausa da animacao") }
 
-entidade_sprite_inverter_x(jogador, verdadeiro)
-entidade_animacao_reproduzir(jogador, falso)
-var quadro = entidade_animacao_frame(jogador)
-entidade_atualizar(jogador, 0.2)
-se (entidade_animacao_frame(jogador) != quadro) {
-    falhar("pausa da animacao")
-}
+entidade.animar(jogador, verdadeiro, verdadeiro)
+se entidade.frame(jogador) != 0 { falhar("reinicio da animacao") }
 
-entidade_animacao_reproduzir(jogador, verdadeiro, verdadeiro)
-se (entidade_animacao_frame(jogador) != 0) {
-    falhar("reinicio da animacao")
-}
+entidade.remover_sprite(jogador)
+se entidade.tem(jogador, "sprite") { falhar("remocao do sprite") }
 
-entidade_sprite_remover(jogador)
-se (entidade_tem_componente(jogador, "sprite")) {
-    falhar("remocao do componente sprite")
-}
+var suave = camera.suavidade(8)
+se suave != 8 { falhar("camera suave") }
 
-var suave = jogo_camera_suavidade(8)
-se (suave != 8) {
-    falhar("configuracao de camera suave")
-}
+camera.seguir(200, 100)
+camera.suavidade(0)
+camera.seguir(50, 25)
 
-jogo_camera_seguir(200, 100)
-jogo_camera_suavidade(0)
-jogo_camera_seguir(50, 25)
+se entidade.quantidade() < 2 { falhar("contagem de entidades") }
 
-se (entidade_quantidade() < 2) {
-    falhar("contagem de entidades")
-}
+entidade.destruir(porta)
+se entidade.buscar("porta_teste") != 0 { falhar("destruicao de entidade") }
 
-entidade_destruir(porta)
-se (entidade_buscar("porta_teste") != 0) {
-    falhar("destruicao de entidade")
-}
-
-escrever("GAMEPLAY_OK")
+escreva("GAMEPLAY_OK")
