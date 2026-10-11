@@ -1,0 +1,63 @@
+var dados = {
+    um: 1,
+    dois: 2,
+    tres: 3,
+    quatro: 4
+}
+
+var soma = 0
+var quantidade = 0
+var viu_dois = falso
+
+para chave, valor em dados {
+    soma += valor
+    quantidade += 1
+    se chave == "dois" {
+        viu_dois = verdadeiro
+    }
+}
+
+se soma != 10 { escreva("FALHA_SOMA", soma) }
+se quantidade != 4 { escreva("FALHA_QTD", quantidade) }
+se nao viu_dois { escreva("FALHA_CHAVE") }
+
+var filtrada = 0
+para chave, valor em dados {
+    se chave == "dois" { continue }
+    se chave == "quatro" { continue }
+    filtrada += valor
+}
+se filtrada != 4 { escreva("FALHA_CONTINUE", filtrada) }
+
+var passou = 0
+para chave, valor em dados {
+    passou += 1
+    pare
+}
+se passou != 1 { escreva("FALHA_PARE", passou) }
+
+var chamadas = 0
+funcao criar_mapa() {
+    chamadas += 1
+    retorne { a: 10, b: 20 }
+}
+
+var total_funcao = 0
+para chave, valor em criar_mapa() {
+    total_funcao += valor
+}
+se chamadas != 1 { escreva("FALHA_AVALIACAO", chamadas) }
+se total_funcao != 30 { escreva("FALHA_FUNCAO", total_funcao) }
+
+var snapshot = { a: 1, b: 2 }
+var soma_snapshot = 0
+para chave, valor em snapshot {
+    soma_snapshot += valor
+    snapshot["c"] = 100
+}
+se soma_snapshot != 3 { escreva("FALHA_SNAPSHOT", soma_snapshot) }
+
+var ps = pares({ x: 7, y: 8 })
+se tamanho(ps) != 2 { escreva("FALHA_PARES") }
+
+escreva("MAPAS_ITERACAO_OK")
