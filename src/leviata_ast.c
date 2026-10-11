@@ -1,5 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA - IMPLEMENTAÇÃO DA AST
+ * LEVIATA 3 - IMPLEMENTAÇÃO DA AST
  * ============================================================================ */
 #include "leviata_ast.h"
 #include <stdio.h>
@@ -32,13 +32,6 @@ void ast_free(AstNode *node) {
 
         case AST_ASSIGN:
         case AST_COMPOUND_ASSIGN: {
-            /*
-             * O parser expande "a += b" para um AST_ASSIGN cujo valor é
-             * "a + b". Nessa representação histórica o mesmo ponteiro de
-             * alvo pode aparecer também como binop.left. Quebramos apenas
-             * essa referência compartilhada antes da liberação para impedir
-             * double free, mantendo a AST compatível com o compilador atual.
-             */
             AstNode *target = node->as.assign.target;
             AstNode *value = node->as.assign.value;
             if (value && value->type == AST_BINOP &&
@@ -96,6 +89,11 @@ void ast_free(AstNode *node) {
             ast_free(node->as.for_range.body);
             break;
 
+        case AST_FOR_EACH:
+            ast_free(node->as.for_each.collection);
+            ast_free(node->as.for_each.body);
+            break;
+
         case AST_INDEX:
             ast_free(node->as.index_access.object);
             ast_free(node->as.index_access.index);
@@ -131,20 +129,33 @@ void ast_print(AstNode *node, int indent) {
             printf("(int %lld)\n", (long long)node->as.int_lit.value);
             break;
         case AST_FLOAT_LIT:
-            printf("(float %g)\n", node->as.float_lit.value);
+            printf("(dec %g)\n", node->as.float_lit.value);
             break;
         case AST_STR_LIT:
-            printf("(string \"%s\")\n", node->as.str_lit.value);
+            printf("(txt \"%s\")\n", node->as.str_lit.value);
             break;
         case AST_BOOL_LIT:
-            printf("(bool %s)\n",
-                   node->as.bool_lit.value ? "verdadeiro" : "falso");
+            printf("(bool %s)\n", node->as.bool_lit.value ? "verdadeiro" : "falso");
             break;
         case AST_NULL_LIT:
             printf("(nulo)\n");
             break;
         case AST_IDENT:
             printf("(ident %s)\n", node->as.ident.name);
+            break;
+        case AST_FIELD:
+            printf("(campo .%s)\n", node->as.field_access.field);
+            ast_print(node->as.field_access.object, indent + 1);
+            break;
+        case AST_INDEX:
+            printf("(indice)\n");
+            ast_print(node->as.index_access.object, indent + 1);
+            ast_print(node->as.index_access.index, indent + 1);
+            break;
+        case AST_LIST_LIT:
+            printf("(lista %d itens)\n", node->as.list_lit.count);
+            for (int i = 0; i < node->as.list_lit.count; i++)
+                ast_print(node->as.list_lit.items[i], indent + 1);
             break;
         case AST_BINOP:
             printf("(binop '%s')\n", token_type_name(node->as.binop.op));
@@ -169,19 +180,19 @@ void ast_print(AstNode *node, int indent) {
             ast_print(node->as.var_decl.init, indent + 1);
             break;
         case AST_FUNC_DECL:
-            printf("(funcao %s(%d params))\n",
-                   node->as.func_decl.name,
+            printf("(funcao %s(%d params))\n", node->as.func_decl.name,
                    node->as.func_decl.param_count);
             ast_print(node->as.func_decl.body, indent + 1);
             break;
         case AST_CALL:
+        case AST_METHOD_CALL:
             printf("(chamada)\n");
             ast_print(node->as.call.callee, indent + 1);
             for (int i = 0; i < node->as.call.argc; i++)
                 ast_print(node->as.call.args[i], indent + 2);
             break;
         case AST_RETURN:
-            printf("(retornar)\n");
+            printf("(retorne)\n");
             ast_print(node->as.ret.value, indent + 1);
             break;
         case AST_BLOCK:
@@ -210,13 +221,24 @@ void ast_print(AstNode *node, int indent) {
             ast_print(node->as.for_range.to, indent + 1);
             ast_print(node->as.for_range.body, indent + 1);
             break;
+        case AST_FOR_EACH:
+            printf("(para %s em)\n", node->as.for_each.var_name);
+            ast_print(node->as.for_each.collection, indent + 1);
+            ast_print(node->as.for_each.body, indent + 1);
+            break;
+        case AST_BREAK:
+            printf("(pare)\n");
+            break;
+        case AST_CONTINUE:
+            printf("(continue)\n");
+            break;
         case AST_PROGRAM:
             printf("(programa %d stmts)\n", node->as.program.count);
             for (int i = 0; i < node->as.program.count; i++)
                 ast_print(node->as.program.stmts[i], indent + 1);
             break;
         default:
-            printf("(nó %d)\n", node->type);
+            printf("(no %d)\n", node->type);
             break;
     }
 }
