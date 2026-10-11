@@ -8,8 +8,8 @@
 #include <stddef.h>
 
 #define LV_VERSION_MAJOR  2
-#define LV_VERSION_MINOR  3
-#define LV_VERSION_PATCH  1
+#define LV_VERSION_MINOR  4
+#define LV_VERSION_PATCH  0
 
 #define LV_MAX_IDENTIFIER  128
 #define LV_MAX_STRING      4096
