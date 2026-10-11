@@ -1,0 +1,7 @@
+usar "modulos_alias/biblioteca.pt" como util
+
+escreva(util.nome_biblioteca)
+escreva("Dobro:", util.dobro(21))
+
+var caixa = novo util.Caixa(42)
+escreva(caixa.mostrar())
