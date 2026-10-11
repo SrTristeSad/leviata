@@ -9,7 +9,7 @@
 
 /* ---- Configurações do Sistema ---- */
 #define LV_VERSION_MAJOR  2
-#define LV_VERSION_MINOR  0
+#define LV_VERSION_MINOR  2
 #define LV_VERSION_PATCH  0
 
 #define LV_MAX_IDENTIFIER  128
