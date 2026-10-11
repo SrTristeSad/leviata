@@ -1,0 +1,29 @@
+/* Leviata 3.2 - classes, este, novo e herança. */
+
+classe Animal {
+    var nome = "sem nome"
+
+    funcao nomear(valor) {
+        este.nome = valor
+    }
+
+    funcao falar() {
+        retorne este.nome + " fez um som"
+    }
+}
+
+classe Gato herda Animal {
+    var vidas = 7
+
+    funcao falar() {
+        retorne este.nome + " disse miau"
+    }
+}
+
+var bicho = novo Gato()
+bicho.nomear("Baltazar")
+
+escreva("Tipo:", tipo(bicho))
+escreva("Nome:", bicho.nome)
+escreva("Vidas:", bicho.vidas)
+escreva(bicho.falar())
