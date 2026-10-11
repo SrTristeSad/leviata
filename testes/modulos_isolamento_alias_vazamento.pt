@@ -1,0 +1,4 @@
+usar "modulos_isolamento/a.pt" como a
+
+/* Com alias, apenas a.valor() e valido. */
+escreva(valor())
