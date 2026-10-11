@@ -1,0 +1,21 @@
+/* Leviata 3.8 - mapas/dicionarios. */
+
+var jogador = {
+    nome: "Alex",
+    nivel: 12,
+    posicao: {
+        x: 100,
+        y: 80
+    }
+}
+
+escreva("Nome:", jogador.nome)
+escreva("Nivel:", jogador["nivel"])
+escreva("Posicao:", jogador.posicao.x, jogador.posicao.y)
+
+jogador.nivel += 1
+jogador["online"] = verdadeiro
+
+escreva("Campos:", tamanho(jogador))
+escreva("Tem online:", contem(jogador, "online"))
+escreva("Chaves:", tamanho(chaves(jogador)))
