@@ -15,6 +15,7 @@
 #include "leviata_world.h"
 #include "leviata_canon.h"
 #include "leviata_resources.h"
+#include "leviata_classes.h"
 
 AstNode *leviata_parse(const char *source, int *had_error);
 
@@ -22,7 +23,7 @@ static void print_banner(void) {
     printf("╔══════════════════════════════════════════════════════════╗\n");
     printf("║              LEVIATA v%d.%d.%d — Português              ║\n",
            LV_VERSION_MAJOR, LV_VERSION_MINOR, LV_VERSION_PATCH);
-    printf("║  VM | Bytecode | Raylib | World | Objetos nativos      ║\n");
+    printf("║ VM | Bytecode | Raylib | World | Objetos | Classes     ║\n");
     printf("╚══════════════════════════════════════════════════════════╝\n\n");
 }
 
@@ -102,9 +103,8 @@ static void run_repl(LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.1.0\"\n"
+    "var versao = \"3.2.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
-    "escreva(\"Raiz de 144 =\", raiz(144))\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
     "var soma_notas = 0\n"
@@ -113,6 +113,12 @@ static const char *DEMO_PROGRAMA =
     "var config = arquivo(\"leviata_demo.tmp\")\n"
     "config.escreva(\"objetos=ok\")\n"
     "escreva(\"Recurso:\", tipo(config), config.caminho, config.leia())\n"
+    "classe Saudacao {\n"
+    "  var texto = \"Oi\"\n"
+    "  funcao diga(nome_alvo) { retorne este.texto + \" \" + nome_alvo }\n"
+    "}\n"
+    "var saudacao = novo Saudacao()\n"
+    "escreva(\"Classe:\", tipo(saudacao), saudacao.diga(\"Leviata\"))\n"
     "cena.mudar(\"demo\")\n"
     "var entidade_demo = entidade.criar(\"demo\", 10, 20, 32, 32)\n"
     "entidade.fisica(entidade_demo, 980, 2)\n"
@@ -120,7 +126,7 @@ static const char *DEMO_PROGRAMA =
     "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.1 ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3.2 ===\n\n");
     execute_source(vm, DEMO_PROGRAMA, 0);
     remove("leviata_demo.tmp");
 }
@@ -152,13 +158,14 @@ int main(int argc, char *argv[]) {
     LvVM vm;
     vm_init(&vm);
 
-    /* Implementação interna primeiro; superfície pública canônica por último. */
+    /* Implementação interna primeiro; superfície pública por último. */
     stdlib_register_all(&vm);
     ffi_register_runtime(&vm);
     leviata_2d_register_runtime(&vm);
     leviata_world_register_runtime(&vm);
     leviata_canon_register(&vm);
     leviata_resources_register(&vm);
+    leviata_classes_register(&vm);
     leviata_canon_finalize(&vm);
 
     int exit_code = 0;
