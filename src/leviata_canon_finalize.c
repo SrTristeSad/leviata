@@ -10,6 +10,7 @@ static int nome_legado(const char *nome) {
         "escrever", "imprimir", "ler",
         "para_texto", "para_inteiro", "para_decimal",
         "ler_arquivo", "escrever_arquivo", "adicionar_arquivo",
+        "arquivo.leia", "arquivo.escreva", "arquivo.adicione",
         "absoluto", "cosseno", "tangente", "logaritmo", "logaritmo10",
         "maximo", "minimo", "aleatorio_inteiro",
         "fatiar", "comeca_com", "termina_com",
