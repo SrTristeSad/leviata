@@ -1,8 +1,8 @@
 # Leviata
 
-Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, módulos e uma camada 2D/World opcional baseada em Raylib.
+Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, construtores, módulos e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.3**.
+A versão atual é **Leviata 3.4**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -88,15 +88,18 @@ funcao soma(a, b) {
 escreva(soma(5, 3))
 ```
 
-## Classes — 3.2+
+## Classes e construtores — 3.4
+
+Classes possuem campos, métodos, herança e construtores. O método especial `iniciar(...)` recebe os argumentos usados em `novo Classe(...)`.
 
 ```leviata
 classe Pessoa {
-    var nome = "sem nome"
-    var tags = []
+    var nome = ""
+    var idade = 0
 
-    funcao nomear(valor) {
-        este.nome = valor
+    funcao iniciar(nome, idade) {
+        este.nome = nome
+        este.idade = idade
     }
 
     funcao saudacao() {
@@ -104,25 +107,45 @@ classe Pessoa {
     }
 }
 
-var ana = novo Pessoa()
-ana.nomear("Ana")
+var ana = novo Pessoa("Ana", 30)
 
 escreva(ana.nome)
+escreva(ana.idade)
 escreva(ana.saudacao())
 escreva(tipo(ana))   /* Pessoa */
 ```
 
-`este` é o objeto que recebeu a chamada. Campos são independentes por instância. Listas usadas como valor padrão são clonadas para impedir compartilhamento acidental entre objetos.
+`novo` é uma expressão normal, então também pode ser usado aninhado:
+
+```leviata
+classe Caixa {
+    var valor = nulo
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
+}
+
+var caixa = novo Caixa(novo Pessoa("Bia", 25))
+```
+
+Regras dos construtores em 3.4:
+
+- `iniciar(...)` é chamado automaticamente durante `novo Classe(...)`;
+- a quantidade de argumentos deve ser igual à quantidade de parâmetros de `iniciar`;
+- o valor retornado por `iniciar` é ignorado: `novo` sempre retorna a instância criada;
+- classe sem `iniciar` possui construtor vazio e usa `novo Classe()`;
+- construtores não são herdados nesta versão; uma classe filha que precisa de argumentos declara seu próprio `iniciar(...)`;
+- campos herdados continuam disponíveis normalmente no construtor da classe filha;
+- classes continuam sendo declaradas no escopo principal.
+
+Campos são independentes por instância. Listas usadas como valor padrão são clonadas para impedir compartilhamento acidental entre objetos.
 
 ### Herança
 
 ```leviata
 classe Animal {
     var nome = "sem nome"
-
-    funcao nomear(valor) {
-        este.nome = valor
-    }
 
     funcao falar() {
         retorne este.nome + " fez um som"
@@ -132,21 +155,22 @@ classe Animal {
 classe Gato herda Animal {
     var vidas = 7
 
+    funcao iniciar(nome) {
+        este.nome = nome
+    }
+
     funcao falar() {
         retorne este.nome + " disse miau"
     }
 }
 
-var gato = novo Gato()
-gato.nomear("Baltazar")
+var gato = novo Gato("Baltazar")
 escreva(gato.falar())
 ```
 
 A classe filha herda campos e métodos e pode sobrescrever métodos do pai.
 
-Na versão atual, `novo Classe()` não recebe argumentos. Classes são declaradas no escopo principal.
-
-## Módulos — 3.3
+## Módulos — 3.3+
 
 Arquivos Leviata podem carregar outros arquivos com `usar`:
 
@@ -156,7 +180,7 @@ usar "modulos/util.pt"
 escreva(saudacao_modulo("Leviata"))
 ```
 
-Um módulo pode exportar naturalmente funções, classes e variáveis globais porque o 3.3 usa **namespace global compartilhado**:
+Um módulo pode disponibilizar funções, classes e variáveis globais porque o sistema atual usa **namespace global compartilhado**:
 
 ```leviata
 /* modulos/util.pt */
@@ -165,7 +189,11 @@ funcao dobro(valor) {
 }
 
 classe Caixa {
-    var valor = 10
+    var valor = 0
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
 }
 ```
 
@@ -175,28 +203,20 @@ Depois:
 usar "modulos/util.pt"
 
 escreva(dobro(5))
-var caixa = novo Caixa()
+var caixa = novo Caixa(10)
 ```
 
-Regras do `usar` em 3.3:
+Regras do `usar`:
 
 - só pode aparecer no escopo principal;
 - o caminho é relativo ao arquivo que contém o `usar`;
-- imports aninhados também resolvem seus caminhos relativamente ao próprio módulo;
+- imports aninhados resolvem caminhos relativamente ao próprio módulo;
 - cada arquivo é executado somente uma vez por processo;
-- importar o mesmo arquivo por caminhos equivalentes não o executa novamente;
+- caminhos equivalentes não executam o mesmo módulo novamente;
 - ciclos como `A -> B -> A` são detectados e geram erro;
-- os módulos são carregados antes da compilação do arquivo importador;
+- módulos são carregados antes da compilação do arquivo importador;
 - a extensão deve ser informada explicitamente, por exemplo `"util.pt"`;
-- 3.3 ainda não possui `exportar`, alias nem namespace isolado por módulo.
-
-Exemplo oficial:
-
-```bash
-./leviata exemplos/modulos.pt
-```
-
-A decisão de começar com namespace compartilhado é deliberada: é melhor ter um sistema pequeno e correto do que fingir isolamento renomeando símbolos sem corrigir referências internas. Uma revisão futura pode introduzir exportação/alias de forma completa.
+- ainda não existem `exportar`, alias nem namespace isolado por módulo.
 
 ## Tipos e conversões
 
@@ -258,16 +278,13 @@ var foto = imagem("jogador.png")
 escreva(foto.caminho)
 escreva(foto.largura)
 escreva(foto.altura)
-
 foto.desenhe(100, 80)
-foto.desenhe(100, 80, 64, 64)
 ```
 
 ### Som
 
 ```leviata
 var tiro = som("tiro.wav")
-
 tiro.volume(0.5)
 escreva(tiro.volume)
 tiro.toque()
@@ -277,12 +294,9 @@ tiro.toque()
 
 ```leviata
 var dados = arquivo("dados.txt")
-
 dados.escreva("Olá")
 dados.adicione("\nOutra linha")
-
 escreva(dados.leia())
-escreva(dados.caminho)
 ```
 
 Também é válido:
@@ -387,9 +401,13 @@ arquivo principal .pt
    ↓
 resolver `usar` recursivamente
    ↓
-Lexer -> Parser / AST
+front-end Leviata
+   ├─ normalização de `novo Classe(args...)`
+   ├─ Lexer
+   └─ Parser / AST
    ↓
 Compilador de bytecode
+   ├─ construtores gerados por classe
    ├─ APIs qualificadas: camera.seguir
    ├─ recursos: foto.desenhe
    └─ classes: objeto.metodo / objeto.campo
@@ -402,8 +420,6 @@ Stdlib / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
-
-Módulos importados são executados antes do arquivo importador e compartilham a mesma VM e tabela global.
 
 ## Compilar
 
@@ -436,6 +452,7 @@ exemplos/hello.pt
 exemplos/listas.pt
 exemplos/matematica.pt
 exemplos/classes.pt
+exemplos/construtores.pt
 exemplos/modulos.pt
 exemplos/jogo.pt
 exemplos/motor2d.pt
@@ -450,6 +467,7 @@ exemplos/gameplay.pt
 ./leviata testes/gameplay.pt
 ./leviata testes/recursos.pt
 ./leviata testes/classes.pt
+./leviata testes/construtores.pt
 ./leviata testes/modulos_main.pt
 ```
 
@@ -461,7 +479,8 @@ make debug
 ./leviata_debug testes/gameplay.pt
 ./leviata_debug testes/recursos.pt
 ./leviata_debug testes/classes.pt
+./leviata_debug testes/construtores.pt
 ./leviata_debug testes/modulos_main.pt
 ```
 
-O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/módulos, testes negativos de ciclo/escopo e AddressSanitizer/UndefinedBehaviorSanitizer.
+O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/construtores/módulos, testes negativos e AddressSanitizer/UndefinedBehaviorSanitizer.
