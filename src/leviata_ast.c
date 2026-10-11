@@ -61,15 +61,26 @@ void ast_free(AstNode *node) {
             ast_free(node->as.func_decl.body);
             break;
 
+        case AST_CLASS_DECL:
+            for (int i = 0; i < node->as.class_decl.member_count; i++)
+                ast_free(node->as.class_decl.members[i]);
+            free(node->as.class_decl.members);
+            break;
+
         case AST_RETURN:
             ast_free(node->as.ret.value);
             break;
 
         case AST_BLOCK:
-        case AST_PROGRAM:
             for (int i = 0; i < node->as.block.count; i++)
                 ast_free(node->as.block.stmts[i]);
             free(node->as.block.stmts);
+            break;
+
+        case AST_PROGRAM:
+            for (int i = 0; i < node->as.program.count; i++)
+                ast_free(node->as.program.stmts[i]);
+            free(node->as.program.stmts);
             break;
 
         case AST_IF:
@@ -109,6 +120,7 @@ void ast_free(AstNode *node) {
             free(node->as.list_lit.items);
             break;
 
+        case AST_NEW:
         default:
             break;
     }
@@ -142,6 +154,9 @@ void ast_print(AstNode *node, int indent) {
             break;
         case AST_IDENT:
             printf("(ident %s)\n", node->as.ident.name);
+            break;
+        case AST_NEW:
+            printf("(novo %s)\n", node->as.new_expr.class_name);
             break;
         case AST_FIELD:
             printf("(campo .%s)\n", node->as.field_access.field);
@@ -183,6 +198,15 @@ void ast_print(AstNode *node, int indent) {
             printf("(funcao %s(%d params))\n", node->as.func_decl.name,
                    node->as.func_decl.param_count);
             ast_print(node->as.func_decl.body, indent + 1);
+            break;
+        case AST_CLASS_DECL:
+            if (node->as.class_decl.has_parent)
+                printf("(classe %s herda %s)\n", node->as.class_decl.name,
+                       node->as.class_decl.parent);
+            else
+                printf("(classe %s)\n", node->as.class_decl.name);
+            for (int i = 0; i < node->as.class_decl.member_count; i++)
+                ast_print(node->as.class_decl.members[i], indent + 1);
             break;
         case AST_CALL:
         case AST_METHOD_CALL:
