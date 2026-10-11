@@ -1,4 +1,4 @@
-/* Regressão do núcleo Leviata: lógica, escopos e índices. */
+/* Regressão do núcleo Leviata: lógica, escopos, listas e índices. */
 
 funcao falhar(mensagem) {
     escrever("FALHA:", mensagem)
@@ -80,9 +80,13 @@ se (externo != 10) {
     falhar("shadowing alterou a variavel global")
 }
 
-/* Índices aceitam números numericamente inteiros. */
+/* Literais de lista precisam preservar a ordem escrita. */
 var dados = [10, 20, 30]
+se (dados[0] != 10 ou dados[1] != 20 ou dados[2] != 30) {
+    falhar("ordem do literal de lista")
+}
 
+/* Índices aceitam números numericamente inteiros. */
 se (dados[1.0] != 20) {
     falhar("leitura com indice 1.0")
 }
@@ -98,9 +102,8 @@ se (dados[2] != 77) {
     falhar("indice float dinamico inteiro")
 }
 
-/* Atribuição composta em índice também depende da ordem correta da stack. */
+/* Atribuição composta em índice depende da ordem correta da stack. */
 dados[0] += 5
-escrever("COMPOSTO_VALOR", dados[0])
 se (dados[0] != 15) {
     falhar("atribuicao composta em indice")
 }
