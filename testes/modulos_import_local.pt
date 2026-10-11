@@ -1,0 +1,5 @@
+funcao invalida() {
+    usar "modulos/base.pt"
+}
+
+invalida()
