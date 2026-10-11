@@ -187,7 +187,6 @@ LvObject *gc_alloc_bool(LvVM *vm, int value);
 LvObject *gc_alloc_string(LvVM *vm, const char *str, size_t len);
 LvObject *gc_alloc_list(LvVM *vm);
 LvObject *gc_alloc_function(LvVM *vm, Chunk *chunk, const char *name, int arity);
-LvObject *gc_alloc_native_object(LvVM *vm, LvObjectKind kind, const char *path);
 void gc_collect(LvVM *vm);
 void gc_mark_object(LvObject *obj);
 void gc_sweep(LvVM *vm);
