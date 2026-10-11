@@ -24,6 +24,7 @@ jobs:
           ./leviata exemplos/hello.pt
           ./leviata exemplos/listas.pt
           ./leviata exemplos/mapas.pt
+          ./leviata exemplos/mapas_iteracao.pt
           ./leviata exemplos/matematica.pt
           ./leviata exemplos/classes.pt
           ./leviata exemplos/construtores.pt
@@ -43,6 +44,13 @@ jobs:
         run: |
           ./leviata testes/mapas.pt | tee /tmp/leviata-maps.log
           grep -q "MAPAS_OK" /tmp/leviata-maps.log
+
+          ./leviata testes/mapas_iteracao.pt | tee /tmp/leviata-map-iteration.log
+          grep -q "MAPAS_ITERACAO_OK" /tmp/leviata-map-iteration.log
+          if grep -q "FALHA_" /tmp/leviata-map-iteration.log; then
+            echo "ERRO: regressao na iteracao chave/valor"
+            exit 1
+          fi
 
           if ./leviata testes/mapas_chave_invalida.pt; then
             echo "ERRO: mapa aceitou indice numerico"
@@ -156,6 +164,7 @@ jobs:
         run: |
           ./leviata_debug testes/nucleo.pt
           ./leviata_debug testes/mapas.pt
+          ./leviata_debug testes/mapas_iteracao.pt
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
