@@ -1,5 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA v2.3
+ * MOTOR LEVIATA v2.4
  * Linguagem PT - launcher, REPL e execucao de arquivos .pt
  * ============================================================================ */
 #include <stdio.h>
@@ -18,10 +18,11 @@
 AstNode *leviata_parse(const char *source, int *had_error);
 
 static void print_banner(void) {
-    printf("╔══════════════════════════════════════════════════════╗\n");
-    printf("║       MOTOR LEVIATA v2.3 — Linguagem PT             ║\n");
-    printf("║ VM | Raylib | Camera | Tilemap | Entidades | Fisica║\n");
-    printf("╚══════════════════════════════════════════════════════╝\n\n");
+    printf("╔══════════════════════════════════════════════════════════╗\n");
+    printf("║       MOTOR LEVIATA v%d.%d.%d — Linguagem PT               ║\n",
+           LV_VERSION_MAJOR, LV_VERSION_MINOR, LV_VERSION_PATCH);
+    printf("║ VM | Raylib | World | Sprites | Gatilhos | Fisica       ║\n");
+    printf("╚══════════════════════════════════════════════════════════╝\n\n");
 }
 
 static char *read_file(const char *path) {
@@ -99,8 +100,8 @@ static void run_repl(LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Motor Leviata\"\n"
-    "var versao = 2.3\n"
-    "escrever(\"Sistema:\", nome, \"v\" + para_texto(versao))\n"
+    "var versao = \"2.4.0\"\n"
+    "escrever(\"Sistema:\", nome, \"v\" + versao)\n"
     "escrever(\"Raiz de 144 =\", raiz(144))\n"
     "var notas = [8, 9, 7, 10]\n"
     "lista_adicionar(notas, 9)\n"
