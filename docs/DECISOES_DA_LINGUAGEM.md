@@ -2,11 +2,11 @@
 
 > Documento normativo da escrita pública do Leviata.
 >
-> Qualquer mudança futura de sintaxe, palavra-chave ou API pública deve registrar aqui o paralelo conceitual, a forma oficial escolhida e o motivo da decisão.
+> Este arquivo registra **como a linguagem deve ser escrita e entendida**, qual é o paralelo conceitual com linguagens em inglês e por que cada decisão foi tomada. Não é uma apostila de programação.
 
 **Criado:** 10 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.4  
+**Versão implementada:** Leviata 3.6  
 
 ---
 
@@ -14,9 +14,9 @@
 
 Leviata é uma linguagem própria escrita em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
 
-Conceitos universais podem ter paralelo em outras linguagens, mas a escrita pública do Leviata é definida por esta especificação.
+Conceitos como condição, função, classe, módulo e herança são universais. O paralelo em inglês serve apenas para identificar o conceito correspondente.
 
-Regra principal:
+Regra central:
 
 > **Uma ideia, uma forma oficial.**
 
@@ -26,21 +26,13 @@ Exemplo:
 escreva("Ola")
 ```
 
-A saída pública não possui ao mesmo tempo `print`, `imprimir`, `escrever` e `escreva`. A forma oficial é `escreva`.
+A linguagem pública não deve manter simultaneamente `print`, `imprimir`, `escrever` e `escreva` para a mesma operação.
 
 ---
 
-# 2. Regras de escrita
+# 2. Princípios de escrita
 
-A linguagem deve ser:
-
-- curta sem ser criptográfica;
-- legível;
-- previsível;
-- consistente;
-- simples para começar;
-- capaz de crescer sem nomes gigantes;
-- independente da sintaxe de uma linguagem estrangeira específica.
+A linguagem deve ser curta sem ser criptográfica, legível, previsível, consistente, fácil de memorizar e capaz de crescer sem nomes gigantes.
 
 Símbolos universais permanecem símbolos:
 
@@ -58,17 +50,15 @@ se idade >= 18 {
 }
 ```
 
-Não são necessários `entao`, `faca`, `fimse`, `fimenquanto` e equivalentes.
-
-Palavras reservadas evitam acentos para facilitar teclado, ferramentas e portabilidade.
+Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, tooling e portabilidade. Siglas são permitidas quando são reconhecíveis e economizam escrita sem prejudicar leitura.
 
 ---
 
-# 3. Vocabulário fundamental
+# 3. Vocabulário canônico
 
 | Conceito | Paralelo comum | Leviata |
 |---|---|---|
-| saída | `print` | `escreva` |
+| saída | `print`, `printf` | `escreva` |
 | entrada | `input`, `read` | `leia` |
 | variável | `var`, `let` | `var` |
 | constante | `const` | `const` |
@@ -93,7 +83,10 @@ Palavras reservadas evitam acentos para facilitar teclado, ferramentas e portabi
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
 | herança | `extends`, `inherit` | `herda` |
+| classe pai | `super` | `super` |
 | módulo | `import`, `use` | `usar` |
+| exportação | `export` | `exportar` |
+| alias | `as` | `como` |
 
 Formas históricas removidas:
 
@@ -103,42 +96,34 @@ quebrar   -> pare
 continuar -> continue
 importar  -> usar
 herdar    -> herda
+escrever  -> escreva
 ```
 
 `&&`, `||` e `!` não pertencem à lógica canônica. `!=` continua sendo diferença.
 
 ---
 
-# 4. Entrada, saída e conversões
-
-```leviata
-var nome = leia("Nome: ")
-var idade = int(leia("Idade: "))
-escreva(nome, idade)
-```
-
-Conversões frequentes usam nomes curtos:
+# 4. Tipos e conversões
 
 ```text
-txt  texto
-int  inteiro
-dec  decimal
-bool booleano
+str / String   -> txt
+int            -> int
+float / double -> dec
+bool / Boolean -> bool
 ```
-
-Também existe:
 
 ```leviata
-tipo(valor)
+var a = txt(123)
+var b = int("42")
+var c = dec("3.14")
+var d = bool(1)
 ```
 
-`tipo()` retorna nomes canônicos e reconhece recursos, classes e instâncias.
+`tipo(valor)` usa nomes canônicos do Leviata.
 
 ---
 
 # 5. Controle de fluxo
-
-Condição:
 
 ```leviata
 se idade >= 18 e possui_documento {
@@ -146,36 +131,21 @@ se idade >= 18 e possui_documento {
 } senao {
     escreva("Entrada negada")
 }
-```
 
-Faixa inclusiva:
-
-```leviata
 para n de 1 ate 10 {
     escreva(n)
 }
-```
 
-Coleção:
-
-```leviata
 para fruta em frutas {
     escreva(fruta)
 }
 ```
 
-Controle de laço:
-
-```leviata
-se ignorar { continue }
-se terminou { pare }
-```
-
-`e` e `ou` possuem short-circuit real. `pare` e `continue` respeitam a limpeza de variáveis locais dos blocos abandonados.
+`e` e `ou` possuem short-circuit real. `pare` e `continue` fazem unwind correto das variáveis locais abandonadas.
 
 ---
 
-# 6. Funções
+# 6. Funções, listas e texto
 
 ```leviata
 funcao soma(a, b) {
@@ -185,47 +155,32 @@ funcao soma(a, b) {
 
 Função sem `retorne` explícito devolve `nulo`.
 
----
-
-# 7. Listas e texto
+Lista:
 
 ```leviata
 var nomes = ["Ana", "Bia"]
-var vazia = lista()
-
 adicionar(nomes, "Caio")
 inserir(nomes, 1, "Duda")
 remover(nomes, "Bia")
-limpar(vazia)
 ```
 
 Texto:
 
 ```text
-maiusculas(txt)
-minusculas(txt)
-contem(txt, trecho)
-comeca(txt, inicio)
-termina(txt, fim)
-trecho(txt, inicio, fim)
-tamanho(txt)
-```
-
-Mudanças históricas:
-
-```text
-lista_adicionar -> adicionar
-lista_nova      -> lista
-comeca_com      -> comeca
-termina_com     -> termina
-fatiar          -> trecho
+maiusculas
+minusculas
+contem
+comeca
+termina
+trecho
+tamanho
 ```
 
 ---
 
-# 8. Matemática
+# 7. Matemática
 
-Matemática não recebe `mat.` quando o nome já explica a operação.
+Matemática não recebe namespace quando o nome já identifica a operação:
 
 ```text
 raiz
@@ -245,88 +200,50 @@ aleatorio_int
 pi
 ```
 
-Preferir:
+Preferir `raiz(25)`, não `mat.raiz(25)`.
+
+---
+
+# 8. Função, objeto ou namespace
+
+Regra oficial:
+
+> **Função autoexplicativa fica global. Recurso com estado vira objeto. Namespace só é usado quando realmente evita ambiguidade ou organiza uma API ampla.**
 
 ```leviata
 raiz(25)
+
+var foto = imagem("player.png")
+foto.desenhe(10, 20)
+
+jogo.iniciar("Meu jogo", 960, 540, 60)
+camera.seguir(x, y)
 ```
 
-Não:
-
-```text
-mat.raiz(25)
-```
-
-`pi` é valor, não função.
+Isso substitui APIs históricas como `jogo_desenhar_retangulo` e `jogo_camera_seguir`.
 
 ---
 
-# 9. APIs especializadas
+# 9. Objetos nativos — 3.1
 
-Quando um recurso não possui receptor natural, APIs maiores podem usar domínio:
-
-```leviata
-jogo.iniciar(...)
-desenho.retangulo(...)
-camera.seguir(...)
-entidade.atualizar(...)
-```
-
-Isso substitui nomes históricos como:
-
-```text
-jogo_desenhar_retangulo
-jogo_camera_seguir
-entidade_atualizar_tilemap
-```
-
-Códigos mágicos de teclado também não fazem parte da API recomendada:
-
-```leviata
-teclado.pressionada("A")
-teclado.apertada("espaco")
-teclado.pressionada("esquerda")
-```
-
----
-
-# 10. Objetos nativos — 3.1
-
-Recursos com estado usam objeto e métodos.
-
-Imagem:
+Recursos com estado usam objeto e métodos:
 
 ```leviata
 var foto = imagem("jogador.png")
 foto.desenhe(10, 20)
-escreva(foto.caminho)
-```
 
-Som:
-
-```leviata
 var efeito = som("efeito.wav")
 efeito.volume(0.5)
 efeito.toque()
-```
 
-Arquivo:
-
-```leviata
 var dados = arquivo("dados.txt")
 dados.escreva("Ola")
 escreva(dados.leia())
 ```
 
-A antiga forma estática `arquivo.leia("dados.txt")` deixou de ser a forma pública principal.
-
-Regra geral:
-
-> Função autoexplicativa fica global. Recurso com estado vira objeto. Namespace só existe quando realmente evita ambiguidade.
-
 ---
 
-# 11. Classes — 3.2
+# 10. Classes e herança — 3.2
 
 ```leviata
 classe Pessoa {
@@ -337,168 +254,208 @@ classe Pessoa {
     }
 }
 
-var pessoa = novo Pessoa()
-pessoa.nomear("Ana")
+classe Funcionario herda Pessoa {
+    var cargo = "dev"
+}
 ```
 
 Decisões:
 
 - `classe` declara um tipo do usuário;
-- `novo Nome()` cria uma instância;
+- `novo` cria uma instância;
 - `este` é o receptor implícito;
-- campos são acessados por ponto;
-- métodos são funções de bytecode normais com `este` implícito;
-- listas usadas como valor padrão são clonadas por instância;
-- classes ficam no escopo principal nesta fase da linguagem.
+- métodos usam bytecode normal com `este` como primeiro argumento implícito;
+- listas padrão são clonadas por instância;
+- lookup normal de método percorre filho -> pai.
 
 ---
 
-# 12. Herança — 3.2
-
-```leviata
-classe Gato herda Animal {
-    var vidas = 7
-
-    funcao falar() {
-        retorne este.nome + " disse miau"
-    }
-}
-```
-
-A busca de membros percorre filho -> pai. A classe filha herda campos e métodos e pode sobrescrever métodos.
-
----
-
-# 13. Construtores — 3.4
+# 11. Construtores — 3.4
 
 Forma canônica:
 
 ```leviata
 classe Pessoa {
     var nome = ""
-    var idade = 0
 
-    funcao iniciar(nome, idade) {
+    funcao iniciar(nome) {
         este.nome = nome
-        este.idade = idade
     }
 }
 
-var alex = novo Pessoa("Alex", 29)
+var alex = novo Pessoa("Alex")
 ```
 
-Paralelo conceitual:
+Paralelo:
 
 ```text
 constructor / __init__ -> iniciar
 new Class(args...)     -> novo Classe(args...)
 ```
 
-## Por que `iniciar`?
+Semântica:
 
-- é verbo curto em português;
-- descreve o papel sem copiar `constructor` ou `__init__`;
-- combina com a ideia de preparar a instância recém-criada;
-- evita criar uma palavra-chave nova só para construtor.
+1. `novo Classe(args...)` cria a instância;
+2. `iniciar(...)`, se existir, é chamado automaticamente;
+3. a aridade deve corresponder;
+4. o retorno de `iniciar` é ignorado;
+5. `novo` sempre devolve a instância;
+6. classe sem `iniciar` usa `novo Classe()`;
+7. `novo` é expressão e pode aparecer aninhado.
 
-## Semântica oficial do 3.4
+---
 
-1. `novo Classe(args...)` cria uma nova instância;
-2. se a classe declara `funcao iniciar(...)`, esse método é chamado automaticamente;
-3. os argumentos de `novo` correspondem aos parâmetros de `iniciar`;
-4. aridade incorreta gera erro;
-5. qualquer valor retornado por `iniciar` é ignorado;
-6. `novo` sempre devolve a instância criada;
-7. classe sem `iniciar` possui construtor vazio e usa `novo Classe()`;
-8. `novo` continua sendo expressão e pode aparecer aninhado;
-9. strings e comentários contendo o texto `novo Classe(...)` não são reinterpretados;
-10. construtores não são herdados no 3.4.
+# 12. `super` — 3.5
 
-Exemplo aninhado:
+`super` representa a implementação da classe pai **a partir da classe onde o método atual foi declarado**.
 
 ```leviata
-var caixa = novo Caixa(novo Pessoa("Bia", 25))
-```
+classe Pessoa {
+    var nome = ""
 
-## Decisão sobre herança de construtores
+    funcao iniciar(nome) {
+        este.nome = nome
+    }
 
-No 3.4, uma classe filha que precisa receber argumentos declara seu próprio `iniciar(...)`.
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
+}
 
-```leviata
 classe Funcionario herda Pessoa {
     var cargo = ""
 
-    funcao iniciar(nome, idade, cargo) {
-        este.nome = nome
-        este.idade = idade
+    funcao iniciar(nome, cargo) {
+        super.iniciar(nome)
         este.cargo = cargo
+    }
+
+    funcao saudacao() {
+        retorne super.saudacao() + " / " + este.cargo
     }
 }
 ```
 
-A escolha é deliberada. Herdar construtores automaticamente exigiria definir também chamada ao construtor pai, ordem de inicialização e uma forma equivalente a `super`. Isso deve ser decidido como um recurso completo, não improvisado.
+Decisões:
 
-## Implementação interna
+- `super.metodo(...)` só é válido dentro de método de classe com pai;
+- a busca começa no pai lexical da classe atual;
+- isso evita recursão no override atual;
+- `super.iniciar(...)` é a chamada explícita ao construtor do pai;
+- construtores não são chamados automaticamente em cascata;
+- `super.campo` não existe no 3.5; campos herdados continuam acessíveis por `este.campo`.
 
-A escrita pública continua sendo:
-
-```leviata
-novo Pessoa("Alex", 29)
-```
-
-Internamente, o front-end normaliza a construção e o compilador gera uma função construtora escondida para cada classe. Essa função:
-
-1. cria a instância com os campos padrão;
-2. chama `iniciar(...)` quando existe;
-3. ignora o retorno de `iniciar`;
-4. devolve a instância.
-
-Essa estratégia reutiliza a VM e o sistema de métodos existentes sem criar uma segunda semântica de chamada.
+`super` foi mantido porque é curto e tecnicamente reconhecível. Uma tradução longa reduziria a simplicidade sem melhorar a precisão.
 
 ---
 
-# 14. Módulos — 3.3+
-
-Forma canônica:
+# 13. Módulos básicos — 3.3
 
 ```leviata
 usar "modulos/util.pt"
 ```
 
-Regras atuais:
+Semântica:
 
-1. `usar` só é válido no escopo principal;
-2. o caminho é relativo ao arquivo importador;
-3. módulos podem importar outros módulos;
-4. cada caminho normalizado executa uma única vez por runtime;
-5. imports repetidos não repetem efeitos de topo;
+1. `usar` só aparece no escopo principal;
+2. caminho é relativo ao importador;
+3. imports aninhados usam o módulo atual como base;
+4. cada caminho normalizado executa uma vez;
+5. caminhos equivalentes compartilham cache;
 6. ciclos são detectados;
-7. o módulo é resolvido e executado antes da compilação do importador;
-8. funções, classes e variáveis entram no namespace global compartilhado;
-9. a extensão do arquivo é explícita.
-
-Ainda não existem:
-
-```text
-exportar
-usar ... como ...
-namespace isolado por arquivo
-visibilidade privada de módulo
-```
-
-A decisão de começar com namespace compartilhado evita fingir isolamento apenas renomeando símbolos sem corrigir referências internas.
-
-Construtores 3.4 funcionam também para classes definidas em módulos, porque cada módulo passa pelo mesmo front-end e compilador.
+7. módulo executa antes da compilação do importador;
+8. extensão do arquivo é explícita;
+9. namespace global é compartilhado.
 
 ---
 
-# 15. Modelo interno de objetos
+# 14. Exportação e alias — 3.6
 
-Recursos nativos usam `LV_TYPE_OBJECT` com metadados leves.
+Um módulo declara sua API pública com `exportar`:
 
-Classes e instâncias usam `LV_TYPE_MAP`, rastreado pelo GC.
+```leviata
+exportar const nome = "Ferramentas"
 
-Chaves internas começam com `@` e não colidem com identificadores normais:
+exportar funcao dobro(valor) {
+    retorne valor * 2
+}
+
+exportar classe Caixa {
+    var valor = 0
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
+}
+
+var segredo = 123
+```
+
+Formas aceitas:
+
+```text
+exportar var nome = ...
+exportar const nome = ...
+exportar funcao nome(...) { ... }
+exportar classe Nome { ... }
+```
+
+Importação com alias:
+
+```leviata
+usar "biblioteca.pt" como util
+
+escreva(util.nome)
+escreva(util.dobro(5))
+var caixa = novo util.Caixa(10)
+```
+
+Decisões:
+
+- o alias expõe somente símbolos marcados com `exportar`;
+- símbolo não exportado não recebe `alias.simbolo`;
+- classe exportada recebe também `novo alias.Classe(...)`;
+- o mesmo módulo pode receber mais de um alias sem executar novamente;
+- `usar` e `exportar` ficam no escopo principal.
+
+## Limite intencional do 3.6
+
+`usar ... como ...` é uma **visão qualificada da API exportada**, não um namespace isolado completo.
+
+Por compatibilidade com a VM e os bytecodes da série 3.x, símbolos originais do módulo continuam na tabela global compartilhada:
+
+```leviata
+usar "biblioteca.pt" como util
+
+util.dobro(5)  /* API pública explícita */
+dobro(5)       /* ainda existe por compatibilidade 3.x */
+```
+
+Isolamento real exigirá ambiente/tabela de globais por módulo e referências internas ligadas a esse ambiente. Não será simulado escondendo nomes superficialmente.
+
+---
+
+# 15. O ponto (`.`)
+
+O ponto possui usos consistentes:
+
+```leviata
+camera.seguir(x, y)      /* API estática */
+foto.desenhe(x, y)       /* método de objeto */
+pessoa.nome              /* campo */
+util.dobro(5)            /* exportação qualificada */
+novo util.Caixa(10)      /* classe exportada */
+```
+
+O compilador resolve nomes qualificados conhecidos antes do acesso dinâmico a membro.
+
+---
+
+# 16. Modelo interno
+
+Recursos nativos usam `LV_TYPE_OBJECT`. Classes e instâncias usam `LV_TYPE_MAP`, rastreado pelo GC.
+
+Chaves internas começam com `@`:
 
 ```text
 @tipo
@@ -509,50 +466,75 @@ Chaves internas começam com `@` e não colidem com identificadores normais:
 @metodo:<nome>
 ```
 
-O despacho de campos e métodos é compartilhado entre recursos nativos e instâncias do usuário.
+`super` usa lookup específico começando em `@pai`.
+
+Módulos mantêm:
+
+- caminhos já carregados;
+- pilha de caminhos em carregamento para detectar ciclos;
+- registro de símbolos exportados por caminho normalizado.
+
+Marcadores internos usados pelo front-end são consumidos antes da compilação e suas ASTs são liberadas integralmente.
 
 ---
 
-# 16. Separação entre implementação e superfície pública
+# 17. Implementação versus superfície pública
 
-Nomes C internos não definem a linguagem.
+Nome interno não é especificação da linguagem.
 
-Internamente pode continuar existindo:
+Internamente podem existir:
 
 ```text
 jogo_desenhar_retangulo
+@classe.super_metodo
+__leviata_exportar
+__leviata_alias_import
 ```
 
 Publicamente:
 
 ```leviata
 desenho.retangulo(...)
+super.metodo(...)
+exportar funcao nome(...) { ... }
+usar "arquivo.pt" como modulo
 ```
-
-Da mesma forma, nomes internos gerados para construtores não fazem parte da sintaxe que o programador precisa aprender.
 
 ---
 
-# 17. Política de mudanças futuras
+# 18. Política de mudanças futuras
 
 Toda mudança pública deve responder:
 
 1. Qual conceito representa?
-2. Qual é o paralelo comum em outras linguagens?
-3. Qual será a única forma canônica no Leviata?
+2. Qual é o paralelo comum?
+3. Qual será a única forma canônica?
 4. Por que essa forma é melhor para o Leviata?
-5. A implementação já suporta essa forma ou é apenas proposta?
+5. A implementação já suporta essa forma ou é proposta?
 6. Qual o impacto de compatibilidade?
 
-Não aceitar uma decisão apenas porque “Python faz assim” ou “C faz assim”.
+Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 ---
 
-# 18. Registro histórico
+# 19. Registro histórico
 
 ## 10 de outubro de 2026 — Documento inicial
 
-O documento nasceu para organizar nomes que haviam crescido sem regra única no protótipo. Foi definida a regra **uma ideia, uma forma oficial**.
+A especificação nasceu para organizar um protótipo que havia acumulado múltiplos nomes e APIs longas sem regra única. Foi estabelecido **uma ideia, uma forma oficial**.
+
+## 10 de outubro de 2026 — Vocabulário em português
+
+```text
+print  -> escreva
+input  -> leia
+if     -> se
+else   -> senao
+while  -> enquanto
+for    -> para
+return -> retorne
+break  -> pare
+```
 
 ## 10 de outubro de 2026 — Siglas curtas
 
@@ -563,21 +545,19 @@ decimal  -> dec
 booleano -> bool
 ```
 
-Palavras já claras, como `se`, `para`, `escreva` e `leia`, não seriam abreviadas artificialmente.
+Siglas são aceitas quando reconhecíveis, sem transformar a linguagem em abreviações opacas.
 
 ## 10 de outubro de 2026 — Matemática sem `mat.`
 
-Foi rejeitada a obrigação de `mat.raiz(25)` porque `raiz(25)` já identifica a operação.
+`mat.raiz(25)` foi rejeitado porque `raiz(25)` já identifica a operação.
 
 ## 11 de outubro de 2026 — Leviata 3.0
 
-A escrita canônica passou para lexer, parser, compilador, biblioteca, exemplos e testes.
-
-Entraram `escreva`, `leia`, `retorne`, `pare`, `continue`, `para ... em ...`, `e`, `ou`, `nao`, conversões curtas e APIs qualificadas.
+A escrita canônica passou ao lexer, parser, compilador, biblioteca, exemplos e testes. Entraram `escreva/leia`, `retorne`, `pare/continue`, `para ... em ...`, `e/ou/nao`, conversões curtas, listas curtas, matemática global, APIs qualificadas e teclas por nome.
 
 ## 11 de outubro de 2026 — Leviata 3.1
 
-`imagem`, `som` e `arquivo` passaram a ser objetos reais com campos e métodos.
+`imagem`, `som` e `arquivo` passaram a ser objetos com campos e métodos.
 
 ## 11 de outubro de 2026 — Leviata 3.2
 
@@ -585,20 +565,55 @@ Foram implementados `classe`, `novo`, `este`, `herda`, campos de instância, mé
 
 ## 11 de outubro de 2026 — Leviata 3.3
 
-`usar "arquivo.pt"` passou a carregar módulos reais com caminho relativo, execução única, imports aninhados e detecção de ciclo.
+`usar "arquivo.pt"` passou a carregar módulos reais com caminho relativo, cache de execução única, import aninhado, detecção de ciclo e namespace global compartilhado.
 
 ## 11 de outubro de 2026 — Leviata 3.4
 
-`novo Classe(args...)` passou a aceitar argumentos e chamar automaticamente `iniciar(...)`.
+Construtores ganharam argumentos com `funcao iniciar(...)` e `novo Classe(...)`.
 
-A implementação foi validada com:
+## 11 de outubro de 2026 — Leviata 3.5
 
-- construtor com múltiplos argumentos;
-- retorno de `iniciar` ignorado;
-- `novo` aninhado;
-- classe sem construtor explícito;
-- classe filha com construtor próprio;
-- erro de aridade;
-- strings e comentários contendo `novo`;
-- regressões antigas;
-- AddressSanitizer e UndefinedBehaviorSanitizer.
+Foi implementado `super.metodo(...)` com semântica lexical de classe pai, incluindo `super.iniciar(...)`.
+
+## 11 de outubro de 2026 — Leviata 3.6
+
+Módulos ganharam API explícita:
+
+```leviata
+exportar funcao dobro(x) { retorne x * 2 }
+usar "util.pt" como util
+util.dobro(5)
+novo util.Caixa(10)
+```
+
+O alias expõe apenas símbolos exportados, mas permanece uma visão qualificada sobre o namespace global compartilhado.
+
+Durante a implementação, o LeakSanitizer encontrou ASTs de marcadores internos que eram tornadas inalcançáveis ao serem substituídas por `nulo`. O runtime foi corrigido para liberar a árvore consumida antes de inserir o nó substituto. ASan/UBSan voltaram a ficar verdes.
+
+---
+
+# 20. Estado canônico atual
+
+A referência implementada é **Leviata 3.6**.
+
+Recursos públicos consolidados:
+
+```text
+escreva / leia
+se / senao / enquanto / para
+funcao / retorne
+pare / continue
+verdadeiro / falso / nulo
+e / ou / nao
+classe / novo / este / herda / super
+iniciar como construtor
+usar
+exportar
+usar ... como ...
+txt / int / dec / bool
+objetos de recurso
+APIs qualificadas
+módulos com cache e ciclos detectados
+```
+
+Qualquer mudança futura deve atualizar este documento antes de ser considerada parte da escrita canônica do Leviata.
