@@ -1,0 +1,37 @@
+funcao falhar(mensagem) {
+    escreva("FALHA_MOD_ISOLAMENTO:", mensagem)
+    funcao_que_nao_existe()
+}
+
+usar "modulos_isolamento/a.pt" como a
+usar "modulos_isolamento/b.pt" como b
+usar "modulos_isolamento/compositor.pt" como comp
+
+se a.valor() != "A" {
+    falhar("modulo A perdeu estado privado")
+}
+
+se b.valor() != "B" {
+    falhar("modulo B perdeu estado privado")
+}
+
+se comp.mensagem() != "A!" {
+    falhar("alias aninhado entre modulos")
+}
+
+var caixa_a = novo a.Caixa("1")
+var caixa_b = novo b.Caixa("2")
+
+se tipo(caixa_a) != "Caixa" ou tipo(caixa_b) != "Caixa" {
+    falhar("nome humano da classe foi alterado pelo linker")
+}
+
+se caixa_a.ler() != "A1A" {
+    falhar("metodo da classe A nao encontrou privado correto")
+}
+
+se caixa_b.ler() != "B2B" {
+    falhar("metodo da classe B nao encontrou privado correto")
+}
+
+escreva("MOD_ISOLAMENTO_OK")
