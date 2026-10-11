@@ -1,0 +1,96 @@
+/* Regressão de construtores do Leviata 3.4. */
+
+funcao falhar(mensagem) {
+    escreva("FALHA_CONSTRUTORES:", mensagem)
+    funcao_que_nao_existe()
+}
+
+classe Pessoa {
+    var nome = ""
+    var idade = 0
+    var criado = falso
+
+    funcao iniciar(nome, idade) {
+        este.nome = nome
+        este.idade = idade
+        este.criado = verdadeiro
+        retorne "retorno ignorado pelo construtor"
+    }
+
+    funcao resumo() {
+        retorne este.nome + ":" + txt(este.idade)
+    }
+}
+
+var alex = novo Pessoa("Alex", 29)
+
+se tipo(alex) != "Pessoa" {
+    falhar("novo deve retornar a instancia")
+}
+se alex.nome != "Alex" ou alex.idade != 29 ou nao alex.criado {
+    falhar("iniciar nao recebeu argumentos corretamente")
+}
+se alex.resumo() != "Alex:29" {
+    falhar("instancia construida nao ficou utilizavel")
+}
+
+/* Cada construcao continua criando estado independente. */
+var bia = novo Pessoa("Bia", 31)
+se bia.nome != "Bia" ou alex.nome != "Alex" {
+    falhar("instancias de construtor compartilharam estado")
+}
+
+/* novo continua sendo expressão e pode aparecer dentro de outro novo. */
+classe Caixa {
+    var valor = nulo
+
+    funcao iniciar(valor) {
+        este.valor = valor
+    }
+}
+
+var caixa = novo Caixa(novo Pessoa("Caio", 18))
+se tipo(caixa.valor) != "Pessoa" ou caixa.valor.nome != "Caio" {
+    falhar("novo aninhado")
+}
+
+/* Classe sem iniciar possui construtor vazio. */
+classe Ponto {
+    var x = 10
+    var y = 20
+}
+
+var p = novo Ponto()
+se p.x != 10 ou p.y != 20 {
+    falhar("construtor vazio")
+}
+
+/* Construtores nao sao herdados: a filha define seu proprio iniciar. */
+classe Funcionario herda Pessoa {
+    var cargo = ""
+
+    funcao iniciar(nome, idade, cargo) {
+        este.nome = nome
+        este.idade = idade
+        este.cargo = cargo
+        este.criado = verdadeiro
+    }
+}
+
+var dev = novo Funcionario("Leo", 27, "dev")
+se dev.nome != "Leo" ou dev.idade != 27 ou dev.cargo != "dev" {
+    falhar("construtor da classe filha")
+}
+se dev.resumo() != "Leo:27" {
+    falhar("metodos herdados apos construcao")
+}
+
+/* Comentarios com a palavra novo nao podem ser alterados pelo normalizador. */
+// novo Fantasma("nao executar")
+/* novo Fantasma("tambem nao executar") */
+var frase = "novo Fantasma(123)"
+se frase != "novo Fantasma(123)" {
+    falhar("normalizador alterou string")
+}
+
+escreva("CONSTRUTORES_OK")
