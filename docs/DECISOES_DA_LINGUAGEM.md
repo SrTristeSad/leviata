@@ -4,9 +4,9 @@
 >
 > Este arquivo registra **como a linguagem deve ser escrita e entendida**, qual é o paralelo conceitual com linguagens em inglês e por que cada decisão foi tomada. Não é uma apostila de programação.
 
-**Criado:** 10 de outubro de 2026  
+**Criado:** 11 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.6  
+**Versão implementada:** Leviata 3.7  
 
 ---
 
@@ -343,7 +343,7 @@ Decisões:
 - isso evita recursão no override atual;
 - `super.iniciar(...)` é a chamada explícita ao construtor do pai;
 - construtores não são chamados automaticamente em cascata;
-- `super.campo` não existe no 3.5; campos herdados continuam acessíveis por `este.campo`.
+- `super.campo` não existe; campos herdados continuam acessíveis por `este.campo`.
 
 `super` foi mantido porque é curto e tecnicamente reconhecível. Uma tradução longa reduziria a simplicidade sem melhorar a precisão.
 
@@ -351,11 +351,13 @@ Decisões:
 
 # 13. Módulos básicos — 3.3
 
+Forma original:
+
 ```leviata
 usar "modulos/util.pt"
 ```
 
-Semântica:
+Regras que continuam válidas:
 
 1. `usar` só aparece no escopo principal;
 2. caminho é relativo ao importador;
@@ -363,9 +365,9 @@ Semântica:
 4. cada caminho normalizado executa uma vez;
 5. caminhos equivalentes compartilham cache;
 6. ciclos são detectados;
-7. módulo executa antes da compilação do importador;
-8. extensão do arquivo é explícita;
-9. namespace global é compartilhado.
+7. extensão do arquivo é explícita.
+
+No 3.3 o namespace era global compartilhado. Essa limitação foi removida no 3.7.
 
 ---
 
@@ -382,10 +384,6 @@ exportar funcao dobro(valor) {
 
 exportar classe Caixa {
     var valor = 0
-
-    funcao iniciar(valor) {
-        este.valor = valor
-    }
 }
 
 var segredo = 123
@@ -410,32 +408,96 @@ escreva(util.dobro(5))
 var caixa = novo util.Caixa(10)
 ```
 
-Decisões:
-
-- o alias expõe somente símbolos marcados com `exportar`;
-- símbolo não exportado não recebe `alias.simbolo`;
-- classe exportada recebe também `novo alias.Classe(...)`;
-- o mesmo módulo pode receber mais de um alias sem executar novamente;
-- `usar` e `exportar` ficam no escopo principal.
-
-## Limite intencional do 3.6
-
-`usar ... como ...` é uma **visão qualificada da API exportada**, não um namespace isolado completo.
-
-Por compatibilidade com a VM e os bytecodes da série 3.x, símbolos originais do módulo continuam na tabela global compartilhada:
-
-```leviata
-usar "biblioteca.pt" como util
-
-util.dobro(5)  /* API pública explícita */
-dobro(5)       /* ainda existe por compatibilidade 3.x */
-```
-
-Isolamento real exigirá ambiente/tabela de globais por módulo e referências internas ligadas a esse ambiente. Não será simulado escondendo nomes superficialmente.
+O 3.6 introduziu a API explícita, mas ainda mantinha os símbolos originais no namespace global por compatibilidade. Isso foi uma etapa transitória, não o modelo final.
 
 ---
 
-# 15. O ponto (`.`)
+# 15. Isolamento de módulos — 3.7
+
+No Leviata 3.7, módulos possuem **namespace isolado no nível da linguagem**.
+
+```leviata
+/* biblioteca.pt */
+var fator = 2
+var segredo = 123
+
+exportar funcao dobro(valor) {
+    retorne valor * fator
+}
+```
+
+```leviata
+/* programa.pt */
+usar "biblioteca.pt" como util
+
+util.dobro(5)  /* válido */
+dobro(5)       /* erro */
+segredo        /* erro */
+```
+
+Decisões:
+
+- símbolo privado não aparece no importador;
+- import com alias não cria automaticamente a forma sem prefixo;
+- função ou método exportado continua enxergando os privados do módulo onde foi declarado;
+- dois módulos podem declarar o mesmo nome sem colisão;
+- duas classes exportadas podem ter o mesmo nome humano quando importadas por aliases diferentes;
+- `tipo(instancia)` continua mostrando o nome humano da classe;
+- `novo alias.Classe(...)` liga ao construtor correto;
+- módulo pode importar outro módulo com alias e usar esse alias dentro de suas próprias funções;
+- o cache por caminho e a detecção de ciclos continuam válidos.
+
+Exemplo de dois módulos independentes:
+
+```leviata
+usar "a.pt" como a
+usar "b.pt" como b
+
+escreva(a.valor())
+escreva(b.valor())
+
+var caixa_a = novo a.Caixa()
+var caixa_b = novo b.Caixa()
+```
+
+## Compatibilidade de módulos antigos
+
+Arquivo antigo sem nenhum `exportar` continua utilizável:
+
+```leviata
+/* legado.pt */
+funcao dobro(x) { retorne x * 2 }
+```
+
+```leviata
+usar "legado.pt"
+escreva(dobro(5))
+```
+
+Quando um módulo não possui exportação explícita, suas declarações de topo são tratadas como API pública por compatibilidade. Isso não significa voltar ao namespace compartilhado: internamente os símbolos continuam isolados.
+
+## Implementação escolhida
+
+A VM ainda possui uma HashMap física de globais. Criar uma segunda VM por módulo seria pesado e duplicaria estado do runtime.
+
+O 3.7 adotou **linkedição de símbolos**:
+
+```text
+nome no fonte      -> símbolo interno
+segredo             -> @m1:0
+dobro               -> @m1:1
+novo Caixa          -> @m1:c2
+```
+
+O bytecode do módulo é reescrito para esses nomes internos. Eles contêm `@`, caractere que não pode iniciar identificadores normais do código-fonte, portanto não fazem parte da superfície pública.
+
+Imports ligam nomes visíveis diretamente ao símbolo interno do módulo de origem. Nomes qualificados usados dentro de outro módulo recebem uma dica temporária de compilação e essa dica é removida antes da execução.
+
+Essa estratégia produz isolamento real para o programador sem duplicar a VM nem depender de substituição textual de código.
+
+---
+
+# 16. O ponto (`.`)
 
 O ponto possui usos consistentes:
 
@@ -443,7 +505,7 @@ O ponto possui usos consistentes:
 camera.seguir(x, y)      /* API estática */
 foto.desenhe(x, y)       /* método de objeto */
 pessoa.nome              /* campo */
-util.dobro(5)            /* exportação qualificada */
+util.dobro(5)            /* exportação de módulo */
 novo util.Caixa(10)      /* classe exportada */
 ```
 
@@ -451,11 +513,11 @@ O compilador resolve nomes qualificados conhecidos antes do acesso dinâmico a m
 
 ---
 
-# 16. Modelo interno
+# 17. Modelo interno
 
 Recursos nativos usam `LV_TYPE_OBJECT`. Classes e instâncias usam `LV_TYPE_MAP`, rastreado pelo GC.
 
-Chaves internas começam com `@`:
+Chaves internas de classe começam com `@`:
 
 ```text
 @tipo
@@ -466,19 +528,26 @@ Chaves internas começam com `@`:
 @metodo:<nome>
 ```
 
-`super` usa lookup específico começando em `@pai`.
+Módulos adicionam chaves internas do linker:
 
-Módulos mantêm:
+```text
+@m<modulo>:<simbolo>
+@m<modulo>:c<classe>
+```
+
+O runtime mantém:
 
 - caminhos já carregados;
 - pilha de caminhos em carregamento para detectar ciclos;
-- registro de símbolos exportados por caminho normalizado.
+- símbolos declarados por módulo;
+- lista de exports;
+- links de imports para símbolos internos.
 
 Marcadores internos usados pelo front-end são consumidos antes da compilação e suas ASTs são liberadas integralmente.
 
 ---
 
-# 17. Implementação versus superfície pública
+# 18. Implementação versus superfície pública
 
 Nome interno não é especificação da linguagem.
 
@@ -489,6 +558,7 @@ jogo_desenhar_retangulo
 @classe.super_metodo
 __leviata_exportar
 __leviata_alias_import
+@m2:4
 ```
 
 Publicamente:
@@ -502,7 +572,7 @@ usar "arquivo.pt" como modulo
 
 ---
 
-# 18. Política de mudanças futuras
+# 19. Política de mudanças futuras
 
 Toda mudança pública deve responder:
 
@@ -517,13 +587,11 @@ Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 ---
 
-# 19. Registro histórico
+# 20. Registro histórico
 
-## 10 de outubro de 2026 — Documento inicial
+## 10 de outubro de 2026 — Definição inicial do vocabulário
 
-A especificação nasceu para organizar um protótipo que havia acumulado múltiplos nomes e APIs longas sem regra única. Foi estabelecido **uma ideia, uma forma oficial**.
-
-## 10 de outubro de 2026 — Vocabulário em português
+O projeto começou a reorganizar um protótipo que havia acumulado múltiplos nomes e APIs longas sem regra única. Foi estabelecido **uma ideia, uma forma oficial**.
 
 ```text
 print  -> escreva
@@ -536,20 +604,11 @@ return -> retorne
 break  -> pare
 ```
 
-## 10 de outubro de 2026 — Siglas curtas
+Também foram adotadas siglas curtas e reconhecíveis (`txt`, `int`, `dec`, `bool`) e matemática sem `mat.` quando o nome já é autoexplicativo.
 
-```text
-texto    -> txt
-inteiro  -> int
-decimal  -> dec
-booleano -> bool
-```
+## 11 de outubro de 2026 — Documento normativo
 
-Siglas são aceitas quando reconhecíveis, sem transformar a linguagem em abreviações opacas.
-
-## 10 de outubro de 2026 — Matemática sem `mat.`
-
-`mat.raiz(25)` foi rejeitado porque `raiz(25)` já identifica a operação.
+Foi criado este registro histórico para impedir que futuras mudanças de sintaxe ou biblioteca voltem a acumular aliases e decisões contraditórias.
 
 ## 11 de outubro de 2026 — Leviata 3.0
 
@@ -565,7 +624,7 @@ Foram implementados `classe`, `novo`, `este`, `herda`, campos de instância, mé
 
 ## 11 de outubro de 2026 — Leviata 3.3
 
-`usar "arquivo.pt"` passou a carregar módulos reais com caminho relativo, cache de execução única, import aninhado, detecção de ciclo e namespace global compartilhado.
+`usar "arquivo.pt"` passou a carregar módulos reais com caminho relativo, cache de execução única, import aninhado e detecção de ciclo. O namespace ainda era global compartilhado.
 
 ## 11 de outubro de 2026 — Leviata 3.4
 
@@ -586,15 +645,34 @@ util.dobro(5)
 novo util.Caixa(10)
 ```
 
-O alias expõe apenas símbolos exportados, mas permanece uma visão qualificada sobre o namespace global compartilhado.
+O alias expunha apenas símbolos exportados, mas era uma visão qualificada sobre o namespace global compartilhado. Durante a implementação, o LeakSanitizer encontrou ASTs de marcadores internos que eram tornadas inalcançáveis; o runtime foi corrigido e ASan/UBSan voltaram a ficar verdes.
 
-Durante a implementação, o LeakSanitizer encontrou ASTs de marcadores internos que eram tornadas inalcançáveis ao serem substituídas por `nulo`. O runtime foi corrigido para liberar a árvore consumida antes de inserir o nó substituto. ASan/UBSan voltaram a ficar verdes.
+## 11 de outubro de 2026 — Leviata 3.7
+
+Foi removida a principal limitação do 3.6: módulos passaram a ter isolamento real de nomes no nível da linguagem.
+
+A implementação adotou um linker de símbolos internos em vez de uma VM separada por arquivo. O bytecode de cada módulo referencia chaves privadas `@m...`; imports ligam exports diretamente a essas chaves.
+
+Foram adicionadas regressões para:
+
+- dois módulos com variáveis privadas de mesmo nome;
+- funções públicas de mesmo nome;
+- classes públicas de mesmo nome;
+- métodos que dependem de estado privado do módulo;
+- construtores qualificados;
+- imports aninhados com alias;
+- tentativa de acessar privado do chamador;
+- tentativa de usar export de alias sem o prefixo.
+
+O primeiro teste de import aninhado revelou que o compilador classificava `origem.valor()` como método de objeto quando `origem.valor` não estava na HashMap global. A solução final usa nomes qualificados temporários somente durante a compilação e reconstrói a HashMap antes da execução, evitando vazamento de namespace.
+
+A suíte completa voltou a passar com AddressSanitizer e UndefinedBehaviorSanitizer.
 
 ---
 
-# 20. Estado canônico atual
+# 21. Estado canônico atual
 
-A referência implementada é **Leviata 3.6**.
+A referência implementada é **Leviata 3.7**.
 
 Recursos públicos consolidados:
 
@@ -613,7 +691,9 @@ usar ... como ...
 txt / int / dec / bool
 objetos de recurso
 APIs qualificadas
-módulos com cache e ciclos detectados
+módulos isolados
+cache de módulos
+detecção de ciclos
 ```
 
-Qualquer mudança futura deve atualizar este documento antes de ser considerada parte da escrita canônica do Leviata.
+Qualquer mudança futura deve atualizar este documento para ser considerada parte da escrita canônica do Leviata.
