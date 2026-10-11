@@ -1,34 +1,32 @@
 # Leviata — Especificação Canônica e Registro Histórico
 
-> Documento normativo da escrita pública do Leviata e registro histórico das decisões de linguagem.
+> Documento normativo da escrita pública do Leviata.
 >
-> Quando sintaxe, palavra-chave ou API pública mudar, este arquivo deve registrar **o que mudou, o paralelo conceitual e por que mudou**.
+> Mudanças de sintaxe, palavras-chave e APIs públicas devem ser registradas aqui com o paralelo conceitual e o motivo da decisão.
 
 **Criado:** 10 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.0  
+**Versão implementada:** Leviata 3.2  
 
 ---
 
 # 1. Identidade
 
-Leviata não é Python em português, C em português, JavaScript em português nem Portugol ampliado.
+Leviata é uma linguagem própria escrita em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
 
-Ele é uma linguagem própria escrita em português brasileiro. Conceitos como variável, condição, função e laço naturalmente existem em muitas linguagens; a coluna em inglês deste documento serve apenas como **paralelo semântico**.
+Conceitos como variável, condição, função, classe e laço são universais. Referências a palavras de outras linguagens neste documento servem apenas como paralelo semântico.
 
 Regra principal:
 
 > **Uma ideia, uma forma oficial.**
 
-O usuário não deve aprender três nomes para a mesma operação.
-
-Exemplo:
+Não devem existir várias formas públicas concorrentes para a mesma operação.
 
 ```leviata
 escreva("Ola")
 ```
 
-A forma pública não é simultaneamente `print`, `imprimir`, `escrever` e `escreva`. No Leviata 3, é `escreva`.
+é a forma oficial de saída. `print`, `imprimir`, `escrever` e `escreva` não coexistem como aliases públicos.
 
 ---
 
@@ -36,14 +34,14 @@ A forma pública não é simultaneamente `print`, `imprimir`, `escrever` e `escr
 
 A linguagem deve ser:
 
-- curta;
+- curta sem ser criptográfica;
 - legível;
 - previsível;
 - consistente;
 - simples para começar;
-- capaz de crescer sem obrigar o programador a decorar nomes gigantes.
+- capaz de crescer sem nomes globais gigantes.
 
-Não traduzimos símbolos universais desnecessariamente:
+Símbolos universais não são traduzidos:
 
 ```text
 +  -  *  /  %
@@ -59,9 +57,9 @@ se idade >= 18 {
 }
 ```
 
-Por isso não precisamos de `entao`, `faca`, `fimse`, `fimenquanto` etc.
+Por isso não existem palavras redundantes como `entao`, `faca`, `fimse` ou `fimfuncao`.
 
-Palavras reservadas e nomes públicos evitam acentos para facilitar teclado, ferramentas e portabilidade:
+Palavras reservadas e APIs canônicas evitam acentos:
 
 ```text
 funcao
@@ -70,75 +68,60 @@ nao
 ate
 ```
 
-Strings podem usar português normal:
-
-```leviata
-escreva("Você está programando em português.")
-```
+Strings continuam usando português normal.
 
 ---
 
-# 3. Vocabulário canônico
+# 3. Vocabulário fundamental
 
-| Conceito | Inglês comum | Leviata 3 | Motivo |
-|---|---|---|---|
-| saída | `print`, `printf` | `escreva` | comando direto e tradicional em algoritmos em português |
-| entrada | `input`, `read` | `leia` | forma complementar a `escreva` |
-| variável | `var`, `let` | `var` | abreviação curta e clara |
-| constante | `const` | `const` | curta e reconhecível |
-| condição | `if` | `se` | equivalente natural |
-| alternativa | `else` | `senao` | equivalente natural |
-| laço condicional | `while` | `enquanto` | descreve diretamente a repetição |
-| laço | `for` | `para` | permite sintaxe própria em português |
-| item em coleção | `in` | `em` | `para item em lista` |
-| início de faixa | `from` | `de` | `para n de 1 ate 10` |
-| fim de faixa | `to` | `ate` | completa a faixa |
-| função | `function`, `def`, `fn` | `funcao` | termo técnico em português |
-| retorno | `return` | `retorne` | comando imperativo |
-| interromper laço | `break` | `pare` | descreve exatamente o efeito |
-| próxima iteração | `continue` | `continue` | curto e compreensível em português |
-| verdadeiro | `true` | `verdadeiro` | explícito |
-| falso | `false` | `falso` | explícito |
-| ausência de valor | `null`, `nil`, `None` | `nulo` | um valor nulo único |
-| E lógico | `and`, `&&` | `e` | leitura natural |
-| OU lógico | `or`, `||` | `ou` | leitura natural |
-| negação | `not`, `!` | `nao` | leitura natural |
+| Conceito | Paralelo comum | Leviata |
+|---|---|---|
+| saída | `print` | `escreva` |
+| entrada | `input`, `read` | `leia` |
+| variável | `var`, `let` | `var` |
+| constante | `const` | `const` |
+| condição | `if` | `se` |
+| alternativa | `else` | `senao` |
+| laço condicional | `while` | `enquanto` |
+| laço | `for` | `para` |
+| item em coleção | `in` | `em` |
+| início de faixa | `from` | `de` |
+| fim de faixa | `to` | `ate` |
+| função | `function`, `def`, `fn` | `funcao` |
+| retorno | `return` | `retorne` |
+| interromper laço | `break` | `pare` |
+| próxima iteração | `continue` | `continue` |
+| verdadeiro | `true` | `verdadeiro` |
+| falso | `false` | `falso` |
+| ausência de valor | `null`, `nil`, `None` | `nulo` |
+| E lógico | `and`, `&&` | `e` |
+| OU lógico | `or`, `||` | `ou` |
+| negação | `not`, `!` | `nao` |
+| classe | `class` | `classe` |
+| nova instância | `new` | `novo` |
+| objeto atual | `this`, `self` | `este` |
+| herança | `extends`, `inherit` | `herda` |
+| módulo/dependência | `import`, `use` | `usar` |
 
-Forma antiga -> forma canônica:
+Formas antigas removidas:
 
 ```text
-retornar   -> retorne
-quebrar    -> pare
-continuar  -> continue
-importar   -> usar       (reservado para módulos futuros)
-herdar     -> herda      (reservado para OO futura)
+retornar  -> retorne
+quebrar   -> pare
+continuar -> continue
+importar  -> usar
+herdar    -> herda
 ```
 
-`&&`, `||` e `!` não são a escrita lógica canônica. `!=` continua existindo como operador de diferença.
+`&&`, `||` e `!` não são operadores lógicos canônicos. `!=` continua sendo o operador de diferença.
 
 ---
 
-# 4. Entrada e saída
-
-## `print` -> `escreva`
-
-```leviata
-escreva("Ola")
-escreva("Idade:", idade)
-```
-
-Motivos:
-
-- curto;
-- natural como instrução;
-- conhecido em ensino de algoritmos em português;
-- não sugere necessariamente impressão física como `imprimir`;
-- elimina aliases concorrentes.
-
-## `input/read` -> `leia`
+# 4. Entrada, saída e conversões
 
 ```leviata
 var nome = leia("Nome: ")
+escreva("Ola", nome)
 ```
 
 Entrada não converte tipo automaticamente:
@@ -147,18 +130,14 @@ Entrada não converte tipo automaticamente:
 var idade = int(leia("Idade: "))
 ```
 
----
+Conversões frequentes usam formas curtas e reconhecíveis:
 
-# 5. Tipos e conversões
-
-Siglas são permitidas quando são curtas, reconhecíveis e usadas com frequência.
-
-| Conceito | Inglês comum | Leviata |
-|---|---|---|
-| texto | `str`, `String` | `txt` |
-| inteiro | `int` | `int` |
-| decimal | `float`, `double` | `dec` |
-| booleano | `bool`, `Boolean` | `bool` |
+```text
+txt  texto
+int  inteiro
+dec  decimal
+bool booleano
+```
 
 ```leviata
 var a = txt(123)
@@ -167,25 +146,11 @@ var c = dec("3.14")
 var d = bool(1)
 ```
 
-Também existe:
-
-```leviata
-tipo(valor)
-```
-
-Retornos públicos de `tipo` usam os nomes canônicos: `txt`, `int`, `dec`, `bool`, `lista`, `nulo` etc.
-
-Substituições:
-
-```text
-para_texto   -> txt
-para_inteiro -> int
-para_decimal -> dec
-```
+`tipo(valor)` usa nomes canônicos. Em 3.2 ele também reconhece recursos, classes e instâncias.
 
 ---
 
-# 6. Condições e lógica
+# 5. Condições e lógica
 
 ```leviata
 se idade >= 18 e possui_documento {
@@ -195,29 +160,19 @@ se idade >= 18 e possui_documento {
 }
 ```
 
-Negação:
-
 ```leviata
 se nao bloqueado {
     escreva("Pode continuar")
 }
 ```
 
-`e` e `ou` possuem short-circuit real: o operando direito só é avaliado quando necessário.
+`e` e `ou` possuem short-circuit real: o lado direito só é avaliado quando necessário.
 
 ---
 
-# 7. Repetições
+# 6. Repetições
 
-## Enquanto
-
-```leviata
-enquanto conectado {
-    atualizar()
-}
-```
-
-## Faixa
+Faixa inclusiva:
 
 ```leviata
 para n de 1 ate 10 {
@@ -225,21 +180,15 @@ para n de 1 ate 10 {
 }
 ```
 
-`ate` é inclusivo: o exemplo inclui `10`.
-
-## Coleção
+Coleção:
 
 ```leviata
-var frutas = ["maca", "uva", "banana"]
-
 para fruta em frutas {
     escreva(fruta)
 }
 ```
 
-Essa forma evita obrigar o iniciante a usar índices para simplesmente percorrer uma lista.
-
-## Pare e continue
+Controle:
 
 ```leviata
 para n de 1 ate 100 {
@@ -250,16 +199,14 @@ para n de 1 ate 100 {
     se n == 10 {
         pare
     }
-
-    escreva(n)
 }
 ```
 
-No Leviata 3 ambos geram controle de fluxo real no bytecode e respeitam a limpeza de variáveis locais dos blocos abandonados.
+`pare` e `continue` geram saltos reais no bytecode e fazem unwind das variáveis locais dos blocos abandonados.
 
 ---
 
-# 8. Funções
+# 7. Funções
 
 ```leviata
 funcao soma(a, b) {
@@ -267,54 +214,32 @@ funcao soma(a, b) {
 }
 ```
 
-Paralelo:
-
-```text
-function / def / fn -> funcao
-return              -> retorne
-```
-
-Função sem `retorne` explícito retorna `nulo`.
+Função sem `retorne` explícito devolve `nulo`.
 
 ---
 
-# 9. Listas
-
-Criação literal:
+# 8. Listas
 
 ```leviata
 var nomes = ["Ana", "Bia"]
+var vazia = lista()
+
+adicionar(nomes, "Caio")
+inserir(nomes, 1, "Duda")
+remover(nomes, "Bia")
+limpar(vazia)
+
+escreva(tamanho(nomes))
+escreva(contem(nomes, "Ana"))
 ```
 
-Criação vazia:
-
-```leviata
-var nomes = lista()
-```
-
-API canônica:
-
-```text
-adicionar(lista, valor)
-inserir(lista, indice, valor)
-remover(lista, valor)
-limpar(lista)
-contem(lista, valor)
-tamanho(lista)
-```
-
-O prefixo `lista_` foi removido porque o primeiro argumento já informa o domínio.
-
-```text
-lista_adicionar -> adicionar
-lista_nova      -> lista
-```
+O prefixo histórico `lista_` não faz parte da API pública.
 
 ---
 
-# 10. Texto
+# 9. Texto
 
-API base:
+API canônica:
 
 ```text
 maiusculas(txt)
@@ -326,35 +251,21 @@ trecho(txt, inicio, fim)
 tamanho(txt)
 ```
 
-Mudanças:
+Mudanças históricas:
 
 ```text
 comeca_com -> comeca
 termina_com -> termina
-fatiar -> trecho
+fatiar     -> trecho
 ```
 
-`contem` é intencionalmente genérico: funciona tanto para texto quanto para lista.
+`contem` é genérico e também funciona com listas.
 
 ---
 
-# 11. Matemática
+# 10. Matemática
 
-Matemática não recebe um prefixo `mat.` quando o nome da operação já explica sua finalidade.
-
-Preferir:
-
-```leviata
-raiz(25)
-```
-
-Não:
-
-```text
-mat.raiz(25)
-```
-
-API canônica:
+Operações autoexplicativas ficam no escopo global. Não existe obrigação de escrever `mat.`.
 
 ```text
 raiz(x)
@@ -374,75 +285,30 @@ aleatorio_int(min, max)
 pi
 ```
 
-Abreviações escolhidas por serem convenções reconhecíveis:
-
-```text
-absoluto          -> abs
-cosseno           -> cos
-tangente          -> tan
-logaritmo         -> log
-maximo            -> max
-minimo            -> min
-aleatorio_inteiro -> aleatorio_int
-```
-
-`pi` é um valor, não uma função:
-
-```leviata
-escreva(pi)
-```
+`pi` é valor, não função.
 
 ---
 
-# 12. Regra para APIs maiores
+# 11. APIs especializadas
 
-Não criar nomes globais enormes apenas para evitar colisão.
-
-Forma antiga:
-
-```text
-jogo_desenhar_retangulo(...)
-jogo_camera_seguir(...)
-entidade_atualizar_tilemap(...)
-```
-
-Forma canônica:
+APIs grandes usam nomes por domínio:
 
 ```leviata
+jogo.iniciar(...)
 desenho.retangulo(...)
 camera.seguir(...)
-entidade.atualizar_mapa(...)
+entidade.atualizar(...)
 ```
 
-O ponto serve para organizar APIs especializadas sem contaminar o vocabulário básico.
-
-O compilador do Leviata 3 resolve nomes qualificados como uma unidade da API pública.
-
----
-
-# 13. Entrada de jogos
-
-Códigos mágicos de tecla não fazem parte da API pública recomendada.
-
-Antigo:
+Isso substitui nomes históricos como:
 
 ```text
-jogo_tecla(65)
+jogo_desenhar_retangulo
+jogo_camera_seguir
+entidade_atualizar_tilemap
 ```
 
-Canônico:
-
-```leviata
-teclado.pressionada("A")
-teclado.apertada("espaco")
-teclado.pressionada("esquerda")
-```
-
-Isso reduz memorização sem impedir que a implementação interna continue usando códigos de tecla.
-
----
-
-# 14. Domínios especializados implementados no 3.0
+Domínios implementados:
 
 ```text
 jogo.*
@@ -456,118 +322,260 @@ animacao.*
 cena.*
 mapa.*
 entidade.*
-arquivo.*
 ```
 
-Exemplos:
+O compilador resolve uma cadeia qualificada conhecida como uma única chave da API pública.
+
+---
+
+# 12. Entrada de jogos
+
+Códigos mágicos de tecla não fazem parte da interface recomendada.
 
 ```leviata
-jogo.iniciar("Jogo", 960, 540, 60)
-desenho.retangulo(10, 10, 80, 80, 255, 255, 255)
-camera.seguir(100, 100)
-entidade.criar("player", 0, 0, 32, 48)
-arquivo.leia("dados.txt")
+teclado.pressionada("A")
+teclado.apertada("espaco")
+teclado.pressionada("esquerda")
 ```
 
-`arquivo.*` é um caso onde o domínio evita ambiguidade real com `leia`/`escreva` do console.
+A implementação C pode continuar usando códigos numéricos internamente.
 
 ---
 
-# 15. Ideia de recursos como objetos — não implementada no 3.0
+# 13. Objetos nativos — implementado no 3.1
 
-Durante o desenho da linguagem foi considerada uma API futura como:
+A proposta de recursos como objetos deixou de ser apenas ideia no Leviata 3.1.
 
-```text
+Imagem:
+
+```leviata
 var foto = imagem("jogador.png")
 foto.desenhe(10, 20)
-
-var efeito = som("efeito.wav")
-efeito.toque()
-
-var dados = arquivo("dados.txt")
-dados.leia()
+escreva(foto.caminho)
+escreva(foto.largura)
+escreva(foto.altura)
 ```
 
-A ideia continua válida para estudo, mas **não é sintaxe/API prometida pelo Leviata 3.0**.
+Som:
 
-Ela exige semântica real de propriedades, métodos e recursos com estado. Não será fingida apenas com aliases.
+```leviata
+var efeito = som("efeito.wav")
+efeito.volume(0.5)
+efeito.toque()
+```
 
-Se esse modelo for implementado, este documento deve registrar a mudança antes de substituir a API pública existente.
+Arquivo:
+
+```leviata
+var dados = arquivo("dados.txt")
+dados.escreva("Ola")
+dados.adicione("\nLinha")
+escreva(dados.leia())
+```
+
+A forma histórica `arquivo.leia("dados.txt")` foi retirada da superfície pública. `arquivo(...)` é um construtor de recurso.
+
+O compilador distingue:
+
+- cadeia estática conhecida: `camera.seguir`;
+- membro de um valor: `foto.desenhe`, `dados.caminho`.
+
+Os handlers internos usam nomes iniciados por `@`, que não podem ser escritos como identificadores da linguagem.
 
 ---
 
-# 16. Palavras reservadas para recursos futuros
+# 14. Classes — implementado no 3.2
 
-O lexer do Leviata 3 reserva:
+Forma canônica:
+
+```leviata
+classe Pessoa {
+    var nome = "sem nome"
+
+    funcao nomear(valor) {
+        este.nome = valor
+    }
+
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
+}
+
+var pessoa = novo Pessoa()
+pessoa.nomear("Ana")
+escreva(pessoa.saudacao())
+```
+
+Decisões:
+
+- `classe` declara um tipo definido pelo usuário;
+- `novo Nome()` cria uma instância;
+- `este` é o receptor implícito do método;
+- campos podem ser lidos e alterados por ponto;
+- métodos são funções de bytecode normais com `este` como primeiro argumento implícito;
+- classes são declaradas no escopo principal no 3.2;
+- construtores com argumentos ainda não existem no 3.2.
+
+Campos com lista padrão são clonados por instância para impedir compartilhamento acidental:
+
+```leviata
+classe Caixa {
+    var itens = []
+}
+```
+
+Duas instâncias de `Caixa` recebem listas diferentes.
+
+---
+
+# 15. Herança — implementada no 3.2
+
+```leviata
+classe Animal {
+    var nome = "sem nome"
+
+    funcao falar() {
+        retorne este.nome + " fez um som"
+    }
+}
+
+classe Gato herda Animal {
+    var vidas = 7
+
+    funcao falar() {
+        retorne este.nome + " disse miau"
+    }
+}
+```
+
+A classe filha:
+
+- recebe campos do pai;
+- encontra métodos herdados;
+- pode adicionar novos campos e métodos;
+- pode sobrescrever métodos do pai.
+
+O lookup de método percorre filho -> pai.
+
+`tipo(instancia)` retorna o nome concreto da classe, inclusive para classes filhas.
+
+---
+
+# 16. Modelo interno de objetos
+
+Recursos nativos usam `LV_TYPE_OBJECT` com metadados leves dentro do objeto gerenciado pelo GC.
+
+Classes e instâncias usam `LV_TYPE_MAP`, já rastreado pelo coletor.
+
+Chaves internas começam com `@`:
+
+```text
+@tipo
+@nome
+@pai
+@classe
+@campo:<nome>
+@metodo:<nome>
+```
+
+Elas não colidem com código do usuário porque `@` não inicia identificadores Leviata.
+
+O despacho público de campos e métodos é compartilhado entre recursos nativos e instâncias definidas pelo usuário. Assim, o compilador não precisa codificar cada tipo de objeto.
+
+---
+
+# 17. O ponto (`.`)
+
+O operador de ponto possui semântica contextual, mas previsível.
+
+Se a cadeia completa existir como API estática registrada:
+
+```leviata
+camera.seguir(10, 20)
+```
+
+ela é resolvida como nome qualificado.
+
+Caso contrário:
+
+```leviata
+objeto.campo
+objeto.metodo()
+```
+
+é resolvido como membro do valor à esquerda.
+
+Isso permite manter APIs organizadas e, ao mesmo tempo, oferecer objetos reais.
+
+---
+
+# 18. Módulos — próximo recurso reservado
+
+A palavra:
 
 ```text
 usar
-classe
-novo
-este
-herda
 ```
 
-Paralelos conceituais:
+já é reservada como paralelo de `import`/`use`, mas módulos ainda não fazem parte da implementação funcional do 3.2.
 
-```text
-import/use      -> usar
-class           -> classe
-new             -> novo
-this/self       -> este
-extends/inherit -> herda
-```
+A implementação futura deve definir explicitamente:
 
-Essas palavras definem a direção de nomenclatura, mas módulos e orientação a objetos completos ainda não fazem parte da implementação funcional do 3.0.
+- como um arquivo é localizado;
+- o que ele exporta;
+- isolamento de nomes;
+- ciclos de importação;
+- execução única por módulo;
+- relação entre módulo e nome qualificado.
 
-Não documentar exemplos de módulos/classes como se já fossem executáveis.
+Não documentar sintaxe de módulos como executável antes desse comportamento existir.
 
 ---
 
-# 17. Separação entre implementação e superfície pública
+# 19. Separação entre implementação e superfície pública
 
-A implementação C pode manter nomes internos históricos para evitar reescrever código estável sem necessidade.
+A implementação C pode manter nomes históricos para reaproveitar código estável.
 
-Exemplo interno:
+Internamente:
 
 ```text
 jogo_desenhar_retangulo
 ```
 
-Superfície `.pt`:
+Publicamente:
 
 ```leviata
 desenho.retangulo(...)
 ```
 
-A camada `leviata_canon` registra os nomes públicos e remove aliases antigos da tabela global da VM.
+As camadas canônicas removem aliases antigos da tabela global e expõem somente a escrita oficial.
 
-Portanto, nome interno não é especificação da linguagem.
+Nome interno não é especificação da linguagem.
 
 ---
 
-# 18. Política de mudanças futuras
+# 20. Política de mudanças
 
 Toda mudança pública deve responder:
 
 1. Qual conceito representa?
-2. Qual é o paralelo comum em linguagens escritas em inglês?
+2. Qual é o paralelo comum em outras linguagens?
 3. Qual será a única forma canônica no Leviata?
 4. Por que ela é melhor para o Leviata?
-5. A implementação já suporta essa forma ou é apenas proposta?
-6. Há impacto de compatibilidade com código existente?
+5. A implementação já suporta essa forma ou é só proposta?
+6. Qual o impacto de compatibilidade?
 
-Não aceitar uma decisão apenas porque “Python faz assim” ou “C faz assim”.
+Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 ---
 
-# 19. Registro histórico
+# 21. Registro histórico
 
 ## 10 de outubro de 2026 — Documento inicial
 
-O documento nasceu para organizar nomes que haviam crescido sem uma regra única no protótipo.
+O documento nasceu para organizar nomes que cresceram sem regra única no protótipo.
 
-Problemas identificados:
+Problemas identificados incluíam:
 
 ```text
 escrever / imprimir
@@ -579,64 +587,73 @@ entidade_...
 
 Foi definida a regra **uma ideia, uma forma oficial**.
 
-## 10 de outubro de 2026 — De guia de ensino para especificação
-
-O arquivo deixou de ser uma apostila de “como ensinar programação” e passou a ser a referência para **como o Leviata entende e escreve código**.
-
-Também foi registrado que a coluna em inglês é apenas um paralelo conceitual; Leviata não é uma tradução de outra linguagem.
-
 ## 10 de outubro de 2026 — Siglas curtas
 
-Foi decidido permitir siglas quando o significado permanece óbvio e o ganho de escrita é real.
-
-Principal decisão:
+Foram adotadas formas curtas quando reconhecíveis:
 
 ```text
-texto -> txt
-inteiro -> int
-decimal -> dec
+texto    -> txt
+inteiro  -> int
+decimal  -> dec
 booleano -> bool
 ```
 
-Palavras já claras como `se`, `para`, `escreva` e `leia` não seriam abreviadas artificialmente.
+Palavras já curtas como `se`, `para`, `escreva` e `leia` não seriam abreviadas artificialmente.
 
 ## 10 de outubro de 2026 — Matemática sem `mat.`
 
-Foi rejeitada a ideia de exigir:
-
-```text
-mat.raiz(25)
-```
-
-porque `raiz(25)` já identifica a operação sem ambiguidade.
+Foi rejeitada a obrigação de `mat.raiz(25)` porque `raiz(25)` já identifica a operação.
 
 ## 10 de outubro de 2026 — Recursos como objetos considerados
 
-Foi considerada a ideia de `imagem(...)`, `som(...)` e `arquivo(...)` retornarem recursos com métodos. A proposta foi preservada como direção possível, mas não deveria ser documentada como recurso pronto antes de existir semântica real de objetos/métodos.
+Foi registrada a ideia de `imagem(...)`, `som(...)` e `arquivo(...)` retornarem recursos com estado, mas decidiu-se não fingir esse comportamento usando aliases.
 
-## 11 de outubro de 2026 — Leviata 3.0 implementa a escrita canônica
+## 11 de outubro de 2026 — Leviata 3.0
 
-A especificação deixou de ser apenas planejamento e passou para o código.
+A escrita canônica passou para lexer, parser, compilador, stdlib, exemplos e testes.
 
 Implementado:
 
 ```text
-escreva
-leia
+escreva / leia
 retorne
-pare
-continue
+pare / continue
 para ... em ...
+e / ou / nao
 txt / int / dec / bool
-tipo
 API curta de listas
 matemática canônica
-nomes qualificados para APIs especializadas
+APIs qualificadas
 teclas por nome
 ```
 
-O compilador passou a gerar bytecode real para `pare`, `continue` e `para item em lista`.
+## 11 de outubro de 2026 — Leviata 3.1
 
-A camada pública `leviata_canon` passou a esconder os aliases históricos do runtime.
+Recursos passaram a ser objetos reais:
 
-Todos os exemplos e testes oficiais foram migrados para a escrita do Leviata 3.
+```text
+imagem(...)
+som(...)
+arquivo(...)
+```
+
+Foram implementados campos e métodos nativos, além de regressões específicas e testes com sanitizers.
+
+## 11 de outubro de 2026 — Leviata 3.2
+
+Foram implementados:
+
+```text
+classe
+novo
+este
+herda
+campos de instância
+métodos de usuário
+sobrescrita de métodos
+herança de campos e métodos
+```
+
+Classes/instâncias passaram a usar mapas rastreados pelo GC. Métodos continuam sendo bytecode Leviata normal, com `este` como argumento implícito.
+
+A suíte de regressão passou a validar estado independente entre instâncias, listas padrão clonadas, atribuição de campos, método chamando método, herança, override e sanitizers.
