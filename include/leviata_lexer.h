@@ -1,5 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA - LEXER (TOKENIZADOR)
+ * LEVIATA 3 - LEXER (TOKENIZADOR)
  * ============================================================================ */
 #ifndef LEVIATA_LEXER_H
 #define LEVIATA_LEXER_H
@@ -17,93 +17,88 @@ typedef enum {
     TOK_NULL,       /* nulo */
 
     /* Identificadores */
-    TOK_IDENT,      /* nome de variavel, funcao etc */
+    TOK_IDENT,
 
-    /* Palavras-chave */
+    /* Palavras-chave canônicas */
     TOK_VAR,        /* var */
     TOK_CONST_KW,   /* const */
     TOK_FUNC,       /* funcao */
-    TOK_RETORNAR,   /* retornar */
+    TOK_RETORNAR,   /* retorne */
     TOK_SE,         /* se */
     TOK_SENAO,      /* senao */
     TOK_ENQUANTO,   /* enquanto */
     TOK_PARA,       /* para */
+    TOK_EM,         /* em */
     TOK_DE,         /* de */
     TOK_ATE,        /* ate */
-    TOK_QUEBRAR,    /* quebrar */
-    TOK_CONTINUAR,  /* continuar */
-    TOK_IMPORTAR,   /* importar */
-    TOK_CLASSE,     /* classe */
-    TOK_NOVO,       /* novo */
-    TOK_ESTE,       /* este */
-    TOK_HERDAR,     /* herdar */
+    TOK_QUEBRAR,    /* pare */
+    TOK_CONTINUAR,  /* continue */
+    TOK_IMPORTAR,   /* usar - reservado */
+    TOK_CLASSE,     /* classe - reservado */
+    TOK_NOVO,       /* novo - reservado */
+    TOK_ESTE,       /* este - reservado */
+    TOK_HERDAR,     /* herda - reservado */
 
     /* Operadores aritméticos */
-    TOK_PLUS,       /* + */
-    TOK_MINUS,      /* - */
-    TOK_STAR,       /* * */
-    TOK_SLASH,      /* / */
-    TOK_PERCENT,    /* % */
-    TOK_CARET,      /* ^ (potência) */
+    TOK_PLUS,
+    TOK_MINUS,
+    TOK_STAR,
+    TOK_SLASH,
+    TOK_PERCENT,
+    TOK_CARET,
 
     /* Operadores de comparação */
-    TOK_EQ,         /* == */
-    TOK_NEQ,        /* != */
-    TOK_LT,         /* < */
-    TOK_GT,         /* > */
-    TOK_LTE,        /* <= */
-    TOK_GTE,        /* >= */
+    TOK_EQ,
+    TOK_NEQ,
+    TOK_LT,
+    TOK_GT,
+    TOK_LTE,
+    TOK_GTE,
 
-    /* Operadores lógicos */
-    TOK_AND,        /* e / && */
-    TOK_OR,         /* ou / || */
-    TOK_NOT,        /* nao / ! */
+    /* Operadores lógicos canônicos: e / ou / nao */
+    TOK_AND,
+    TOK_OR,
+    TOK_NOT,
 
     /* Operadores de atribuição */
-    TOK_ASSIGN,     /* = */
-    TOK_PLUS_EQ,    /* += */
-    TOK_MINUS_EQ,   /* -= */
-    TOK_STAR_EQ,    /* *= */
-    TOK_SLASH_EQ,   /* /= */
+    TOK_ASSIGN,
+    TOK_PLUS_EQ,
+    TOK_MINUS_EQ,
+    TOK_STAR_EQ,
+    TOK_SLASH_EQ,
 
-    /* Incremento/Decremento */
-    TOK_PLUSPLUS,   /* ++ */
-    TOK_MINUSMINUS, /* -- */
+    TOK_PLUSPLUS,
+    TOK_MINUSMINUS,
 
     /* Delimitadores */
-    TOK_LPAREN,     /* ( */
-    TOK_RPAREN,     /* ) */
-    TOK_LBRACE,     /* { */
-    TOK_RBRACE,     /* } */
-    TOK_LBRACKET,   /* [ */
-    TOK_RBRACKET,   /* ] */
-    TOK_COMMA,      /* , */
-    TOK_SEMICOLON,  /* ; */
-    TOK_COLON,      /* : */
-    TOK_DOT,        /* . */
+    TOK_LPAREN,
+    TOK_RPAREN,
+    TOK_LBRACE,
+    TOK_RBRACE,
+    TOK_LBRACKET,
+    TOK_RBRACKET,
+    TOK_COMMA,
+    TOK_SEMICOLON,
+    TOK_COLON,
+    TOK_DOT,
 
-    /* Controle */
     TOK_EOF,
     TOK_ERROR
 } TokenType;
 
-/* ---- Estrutura do Token ---- */
 typedef struct {
     TokenType type;
     char      lexeme[LV_MAX_STRING];
     int       line;
     int       col;
-
-    /* Valores pré-parseados */
     int64_t   i_val;
     double    f_val;
 } Token;
 
-/* ---- Estado do Lexer ---- */
 typedef struct {
     const char *source;
     size_t      length;
-    size_t      pos;    /* posição atual */
+    size_t      pos;
     int         line;
     int         col;
     Token       current;
@@ -111,7 +106,6 @@ typedef struct {
     int         has_peek;
 } Lexer;
 
-/* ---- API do Lexer ---- */
 void  lexer_init(Lexer *lex, const char *source);
 Token lexer_next(Lexer *lex);
 Token lexer_peek_token(Lexer *lex);
