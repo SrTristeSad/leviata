@@ -1,0 +1,21 @@
+classe Pessoa {
+    var nome = ""
+    var idade = 0
+
+    funcao iniciar(nome, idade) {
+        este.nome = nome
+        este.idade = idade
+    }
+
+    funcao apresentar() {
+        escreva("Meu nome é", este.nome, "e tenho", este.idade, "anos")
+    }
+}
+
+var alex = novo Pessoa("Alex", 29)
+var bia = novo Pessoa("Bia", 31)
+
+alex.apresentar()
+bia.apresentar()
+
+escreva(tipo(alex))
