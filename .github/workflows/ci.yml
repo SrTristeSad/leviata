@@ -26,3 +26,4 @@ jobs:
           ./leviata exemplos/matematica.pt
           ./leviata exemplos/jogo.pt
           ./leviata exemplos/motor2d.pt
+          ./leviata exemplos/mundo.pt
