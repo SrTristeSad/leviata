@@ -1,0 +1,33 @@
+/* Regressao do sistema de modulos Leviata 3.3. */
+
+usar "modulos/nested.pt"
+usar "modulos/base.pt"
+usar "modulos/base.pt"
+
+funcao falhar(mensagem) {
+    escreva("FALHA_MODULOS:", mensagem)
+    funcao_que_nao_existe()
+}
+
+/* base.pt foi pedido tres vezes no grafo, mas deve executar uma vez. */
+se modulo_execucoes != 1 {
+    falhar("modulo executou mais de uma vez")
+}
+
+se dobro(9) != 18 {
+    falhar("funcao importada")
+}
+
+se quadruplo(5) != 20 {
+    falhar("import aninhado relativo")
+}
+
+var caixa = novo CaixaModulo()
+se tipo(caixa) != "CaixaModulo" {
+    falhar("classe importada")
+}
+se caixa.dobrar() != 20 {
+    falhar("metodo da classe importada")
+}
+
+escreva("MODULOS_OK")
