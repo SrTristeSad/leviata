@@ -103,8 +103,6 @@ static void end_scope(Compiler *c, int line) {
     c->scope_depth--;
 }
 
-/* Emite POPs necessários antes de sair de blocos por pare/continue.
- * Não altera local_count: a estrutura lexical continua sendo compilada. */
 static void emit_unwind_to_depth(Compiler *c, int target_depth, int line) {
     for (int i = c->local_count - 1; i >= 0; i--) {
         if (c->locals[i].depth <= target_depth) break;
@@ -170,10 +168,12 @@ static void loop_patch_continues(Compiler *c, LoopContext *loop, int target) {
 }
 
 /* ============================================================
- * Nomes qualificados da API: camera.seguir, entidade.criar...
+ * Acesso por ponto
  *
- * O ponto não precisa virar um sistema pesado de módulos para APIs estáticas.
- * A árvore é achatada para uma chave global única na VM.
+ * Se a cadeia já existe como global (camera.seguir, desenho.texto...), ela é
+ * uma API estática. Caso contrário, o ponto pertence ao valor da esquerda:
+ * foto.desenhe() vira uma chamada oculta @metodo.desenhe(foto, ...), e
+ * foto.largura vira @campo.largura(foto).
  * ============================================================ */
 static int qualified_name(AstNode *node, char *out, size_t out_size) {
     if (!node || !out || out_size == 0) return 0;
@@ -201,6 +201,19 @@ static int qualified_name(AstNode *node, char *out, size_t out_size) {
 static void emit_load_global_name(Compiler *c, const char *name, int line) {
     int idx = add_string_const(c, name);
     emit(c, OP_LOAD_GLOBAL, idx, line);
+}
+
+static int field_is_static_global(Compiler *c, AstNode *field,
+                                  char *name, size_t name_size) {
+    if (!field || field->type != AST_FIELD) return 0;
+    if (!qualified_name(field, name, name_size)) return 0;
+    return hmap_has(&c->vm->globals, name);
+}
+
+static int hidden_name(char *out, size_t out_size,
+                       const char *kind, const char *name) {
+    int written = snprintf(out, out_size, "@%s.%s", kind, name);
+    return written >= 0 && (size_t)written < out_size;
 }
 
 static void compile_node(Compiler *c, AstNode *node);
@@ -250,20 +263,30 @@ static void compile_expr(Compiler *c, AstNode *node) {
         }
 
         case AST_FIELD: {
-            char name[LV_MAX_STRING];
-            if (!qualified_name(node, name, sizeof(name))) {
+            char public_name[LV_MAX_STRING];
+            if (field_is_static_global(c, node, public_name, sizeof(public_name))) {
+                emit_load_global_name(c, public_name, node->line);
+                break;
+            }
+
+            char hidden[LV_MAX_IDENTIFIER];
+            if (!hidden_name(hidden, sizeof(hidden), "campo",
+                             node->as.field_access.field) ||
+                !hmap_has(&c->vm->globals, hidden)) {
                 fprintf(stderr,
-                        "[LEVIATA][Compilador] Acesso por ponto inválido na linha %d\n",
-                        node->line);
+                        "[LEVIATA][Compilador] Campo '%s' não existe (linha %d)\n",
+                        node->as.field_access.field, node->line);
                 c->had_error = 1;
                 break;
             }
-            emit_load_global_name(c, name, node->line);
+
+            emit_load_global_name(c, hidden, node->line);
+            compile_expr(c, node->as.field_access.object);
+            emit(c, OP_CALL, 1, node->line);
             break;
         }
 
         case AST_BINOP: {
-            /* OP_JUMP_IF_FALSE/TRUE consome a condição. */
             if (node->as.binop.op == TOK_AND) {
                 compile_expr(c, node->as.binop.left);
                 int jmp_false = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
@@ -355,12 +378,39 @@ static void compile_expr(Compiler *c, AstNode *node) {
         }
 
         case AST_CALL:
-        case AST_METHOD_CALL:
-            compile_expr(c, node->as.call.callee);
+        case AST_METHOD_CALL: {
+            AstNode *callee = node->as.call.callee;
+
+            if (callee && callee->type == AST_FIELD) {
+                char public_name[LV_MAX_STRING];
+                if (!field_is_static_global(c, callee,
+                                            public_name, sizeof(public_name))) {
+                    char hidden[LV_MAX_IDENTIFIER];
+                    if (!hidden_name(hidden, sizeof(hidden), "metodo",
+                                     callee->as.field_access.field) ||
+                        !hmap_has(&c->vm->globals, hidden)) {
+                        fprintf(stderr,
+                                "[LEVIATA][Compilador] Método '%s' não existe (linha %d)\n",
+                                callee->as.field_access.field, node->line);
+                        c->had_error = 1;
+                        break;
+                    }
+
+                    emit_load_global_name(c, hidden, node->line);
+                    compile_expr(c, callee->as.field_access.object);
+                    for (int i = 0; i < node->as.call.argc; i++)
+                        compile_expr(c, node->as.call.args[i]);
+                    emit(c, OP_CALL, node->as.call.argc + 1, node->line);
+                    break;
+                }
+            }
+
+            compile_expr(c, callee);
             for (int i = 0; i < node->as.call.argc; i++)
                 compile_expr(c, node->as.call.args[i]);
             emit(c, OP_CALL, node->as.call.argc, node->line);
             break;
+        }
 
         case AST_INDEX:
             compile_expr(c, node->as.index_access.object);
@@ -553,14 +603,12 @@ static void compile_node(Compiler *c, AstNode *node) {
         case AST_FOR_EACH: {
             begin_scope(c);
 
-            /* Guarda a coleção uma única vez. */
             compile_expr(c, node->as.for_each.collection);
             char hidden_collection[LV_MAX_IDENTIFIER];
             snprintf(hidden_collection, sizeof(hidden_collection),
                      "#colecao_%d_%d", node->line, c->local_count);
             int collection_slot = declare_local(c, hidden_collection);
 
-            /* Índice interno começa em zero. */
             int zero = add_int_const(c, 0);
             emit(c, OP_LOAD_INT, zero, node->line);
             char hidden_index[LV_MAX_IDENTIFIER];
@@ -568,13 +616,11 @@ static void compile_node(Compiler *c, AstNode *node) {
                      "#indice_%d_%d", node->line, c->local_count);
             int index_slot = declare_local(c, hidden_index);
 
-            /* O item visível ocupa seu próprio slot. */
             emit(c, OP_LOAD_NULL, 0, node->line);
             int item_slot = declare_local(c, node->as.for_each.var_name);
 
             int loop_start = c->chunk->count;
 
-            /* indice < tamanho(colecao) */
             emit(c, OP_LOAD_LOCAL, index_slot, node->line);
             emit_load_global_name(c, "tamanho", node->line);
             emit(c, OP_LOAD_LOCAL, collection_slot, node->line);
@@ -582,7 +628,6 @@ static void compile_node(Compiler *c, AstNode *node) {
             emit(c, OP_LT, 0, node->line);
             int jmp_end = emit_jump(c, OP_JUMP_IF_FALSE, node->line);
 
-            /* item = colecao[indice] */
             emit(c, OP_LOAD_LOCAL, collection_slot, node->line);
             emit(c, OP_LOAD_LOCAL, index_slot, node->line);
             emit(c, OP_INDEX_GET, 0, node->line);
