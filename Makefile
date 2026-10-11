@@ -1,5 +1,5 @@
 # ============================================================================
-# MOTOR LEVIATA v2.1 — Makefile
+# MOTOR LEVIATA v2.2 — Makefile
 # ============================================================================
 
 CC      ?= gcc
@@ -14,7 +14,8 @@ SRC = src/main.c \
       src/leviata_vm.c \
       src/leviata_compiler.c \
       src/leviata_stdlib.c \
-      src/leviata_ffi.c
+      src/leviata_ffi.c \
+      src/leviata_2d.c
 
 # Tenta usar pkg-config para encontrar Raylib. Se nao existir, cai em -lraylib.
 RAYLIB_CFLAGS := $(shell pkg-config --cflags raylib 2>/dev/null)
@@ -40,11 +41,12 @@ raylib:
 	$(CC) $(CFLAGS) $(RAYLIB_CFLAGS) -O2 -DLVA_USE_RAYLIB $(SRC) -o $(TARGET) $(LDFLAGS) $(RAYLIB_LIBS)
 	@echo ""
 	@echo "✓ Leviata + Raylib compilado: ./$(TARGET)"
-	@echo "  Teste: ./$(TARGET) exemplos/jogo.pt"
+	@echo "  Teste base: ./$(TARGET) exemplos/jogo.pt"
+	@echo "  Motor 2D:  ./$(TARGET) exemplos/motor2d.pt"
 
 # ---- Compila e executa o exemplo grafico ----
 raylib-demo: raylib
-	./$(TARGET) exemplos/jogo.pt
+	./$(TARGET) exemplos/motor2d.pt
 
 # ---- SDL2 permanece como backend futuro/experimental ----
 sdl2:
