@@ -1,0 +1,5 @@
+usar "a.pt" como origem
+
+exportar funcao mensagem() {
+    retorne origem.valor() + "!"
+}
