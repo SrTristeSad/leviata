@@ -1,0 +1,64 @@
+/* Leviata 2.3 - entidades, fisica, mapa externo e camera limitada */
+
+var mapa = mapa_carregar("exemplos/mapas/mundo.csv")
+var largura = mapa_largura()
+var altura = mapa_altura()
+var tile = 32
+
+escrever("Mapa carregado:", largura, "x", altura)
+
+jogo_iniciar("Leviata World 2.3", 960, 540, 60)
+jogo_camera_configurar(160, 120, 1, 0)
+jogo_camera_limites(0, 0, largura * tile, altura * tile)
+
+var jogador = entidade_criar("jogador", 96, 80, 26, 30)
+entidade_fisica(jogador, 980, 5)
+entidade_colisor(jogador, verdadeiro)
+
+cena_mudar("mundo")
+
+quanto = entidade_quantidade()
+escrever("Entidades ativas:", quanto)
+
+/* O backend stub executa um frame; com Raylib o loop e real. */
+enquanto (nao jogo_deve_fechar()) {
+    var dt = jogo_delta()
+    var vx = 0
+
+    se (jogo_tecla(65)) { vx = -180 }
+    se (jogo_tecla(68)) { vx = 180 }
+
+    var vy = entidade_vy(jogador)
+    se (jogo_tecla_apertada(32) e entidade_no_chao(jogador)) {
+        vy = -430
+    }
+
+    entidade_velocidade(jogador, vx, vy)
+    entidade_atualizar_tilemap(jogador, dt, mapa, largura, tile, tile, 0, 0)
+
+    var px = entidade_x(jogador)
+    var py = entidade_y(jogador)
+    jogo_camera_seguir(px + 13, py + 15)
+
+    jogo_iniciar_frame()
+    jogo_limpar_fundo(18, 22, 32)
+    jogo_camera_iniciar()
+
+    /* Desenho debug do mapa carregado do arquivo. */
+    para i de 0 ate tamanho(mapa) - 1 {
+        se (mapa[i] >= 0) {
+            var tx = i % largura
+            var ty = piso(i / largura)
+            jogo_desenhar_retangulo(tx * tile, ty * tile, tile, tile, 65, 76, 95)
+        }
+    }
+
+    entidade_desenhar(jogador, 80, 190, 255)
+    jogo_camera_finalizar()
+
+    jogo_desenhar_texto("A/D move | Espaco pula | mapa externo + fisica", 22, 22, 22, 235, 240, 250)
+    jogo_desenhar_texto("Cena: " + cena_atual(), 22, 50, 18, 180, 190, 210)
+    jogo_finalizar_frame()
+}
+
+jogo_fechar()
