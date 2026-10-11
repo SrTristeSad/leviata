@@ -1,8 +1,8 @@
 # Leviata
 
-Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, objetos nativos, classes, construtores, herança, módulos isolados e uma camada 2D/World opcional baseada em Raylib.
+Leviata é uma linguagem de programação própria, escrita em português brasileiro e implementada em C. Possui lexer, parser, AST, compilador para bytecode, máquina virtual, garbage collector, biblioteca padrão, listas, mapas, objetos nativos, classes, construtores, herança, módulos isolados e uma camada 2D/World opcional baseada em Raylib.
 
-A versão atual é **Leviata 3.7**.
+A versão atual é **Leviata 3.8**.
 
 O Leviata não é Python traduzido, C traduzido nem Portugol. Ele usa conceitos universais de programação, mas possui vocabulário e sintaxe canônicos próprios.
 
@@ -45,6 +45,7 @@ se idade >= 18 {
 | E lógico | `and`, `&&` | `e` |
 | OU lógico | `or`, `||` | `ou` |
 | negação | `not`, `!` | `nao` |
+| mapa/dicionário | `map`, `dict`, object literal | `{ chave: valor }` |
 | classe | `class` | `classe` |
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
@@ -193,7 +194,7 @@ var caixa = novo util.Caixa(42)
 escreva(caixa.dobro())
 ```
 
-No Leviata 3.7, o módulo é **isolado de verdade no nível da linguagem**:
+No Leviata 3.7+, o módulo é **isolado de verdade no nível da linguagem**:
 
 ```leviata
 usar "biblioteca.pt" como util
@@ -268,7 +269,7 @@ bool(1)
 tipo("Leviata")
 ```
 
-`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `imagem`, `som`, `arquivo`, `classe` e, para uma instância, o nome humano de sua classe.
+`tipo()` retorna nomes canônicos como `txt`, `int`, `dec`, `bool`, `lista`, `mapa`, `imagem`, `som`, `arquivo`, `classe` e, para uma instância, o nome humano de sua classe.
 
 ## Listas
 
@@ -280,6 +281,59 @@ inserir(nomes, 1, "Caio")
 remover(nomes, "Bia")
 limpar(nomes)
 ```
+
+## Mapas — 3.8
+
+Mapas usam chaves de texto e não exigem uma família nova de funções para operações que já existem em coleções.
+
+```leviata
+var pessoa = {
+    nome: "Alex",
+    idade: 29,
+    endereco: {
+        cidade: "Salvador",
+        uf: "BA"
+    }
+}
+
+escreva(pessoa.nome)
+escreva(pessoa["idade"])
+escreva(pessoa.endereco.cidade)
+```
+
+Acesso por ponto e por colchetes operam sobre o mesmo dado:
+
+```leviata
+pessoa.idade = 30
+pessoa["idade"] += 2
+pessoa["online"] = verdadeiro
+```
+
+As operações gerais reutilizam nomes já conhecidos:
+
+```leviata
+escreva(tamanho(pessoa))
+escreva(contem(pessoa, "online"))
+
+var nomes = chaves(pessoa)
+var dados = valores(pessoa)
+
+remover(pessoa, "online")
+limpar(pessoa)
+```
+
+Também existe o construtor funcional `mapa()`; por exemplo, `{}` e `mapa()` criam mapas vazios.
+
+Regras:
+
+- chaves são textos;
+- `objeto.chave` é a forma curta quando a chave é um identificador simples;
+- `objeto["qualquer-chave"]` funciona para nomes que não cabem na forma por ponto;
+- atribuição por ponto ou colchetes cria a chave quando necessário;
+- `+=`, `-=`, `*=` e `/=` funcionam em valores indexados compatíveis;
+- `bool(mapa)` é falso quando vazio e verdadeiro quando possui entradas;
+- nomes iniciados por `@` ficam reservados ao runtime e não podem ser chaves públicas;
+- a mesma sintaxe `lista[indice]` continua válida; a indexação agora é genérica no compilador.
 
 ## Matemática
 
@@ -340,36 +394,36 @@ enquanto nao jogo.deve_fechar() {
 jogo.fechar()
 ```
 
-Outros domínios incluem `camera`, `colisao`, `cena`, `mapa`, `entidade` e `audio`.
+Outros domínios incluem `camera`, `colisao`, `cena`, `mapa`, `entidade` e `audio`. O namespace `mapa.*` desse motor representa mapas de cenário/tilemap; o tipo de coleção `mapa` é uma estrutura de chave/valor da linguagem.
 
 ## Arquitetura
 
 ```text
 arquivo principal .pt
    ↓
-resolver `usar` / `exportar` / alias
+normalização de sintaxe
+   ├─ literais de mapa
+   ├─ novo Classe(...)
+   └─ exportar / alias
    ↓
-front-end Leviata
-   ├─ Lexer
-   ├─ Parser / AST
-   └─ normalizações de `novo`, `super` e módulos
+Lexer / Parser / AST
    ↓
-linker de módulos
+resolver módulos e linker
    ├─ símbolos privados por arquivo
    ├─ exports explícitos
    ├─ alias qualificados
    └─ imports aninhados
    ↓
-Compilador de bytecode
+preparação do compilador
+   ├─ indexação genérica de listas/mapas
    ├─ construtores gerados por classe
-   ├─ `super` lexical
-   ├─ APIs qualificadas
-   ├─ recursos
-   └─ classes
+   └─ super lexical
+   ↓
+Compilador de bytecode
    ↓
 VM Leviata + GC
    ↓
-Stdlib / FFI / Motor 2D / World
+Stdlib / recursos / classes / mapas / FFI / Motor 2D / World
    ↓
 Raylib opcional
 ```
@@ -405,6 +459,7 @@ make raylib
 ```text
 exemplos/hello.pt
 exemplos/listas.pt
+exemplos/mapas.pt
 exemplos/matematica.pt
 exemplos/classes.pt
 exemplos/construtores.pt
@@ -420,6 +475,7 @@ exemplos/gameplay.pt
 
 ```bash
 ./leviata testes/nucleo.pt
+./leviata testes/mapas.pt
 ./leviata testes/gameplay.pt
 ./leviata testes/recursos.pt
 ./leviata testes/classes.pt
@@ -435,6 +491,7 @@ Build com sanitizers:
 ```bash
 make debug
 ./leviata_debug testes/nucleo.pt
+./leviata_debug testes/mapas.pt
 ./leviata_debug testes/gameplay.pt
 ./leviata_debug testes/recursos.pt
 ./leviata_debug testes/classes.pt
@@ -445,4 +502,4 @@ make debug
 ./leviata_debug testes/modulos_isolamento_main.pt
 ```
 
-O CI executa build, exemplos, regressões do núcleo/gameplay/recursos/classes/construtores/herança/módulos, testes de isolamento e colisão, casos negativos, AddressSanitizer e UndefinedBehaviorSanitizer.
+O CI executa build, exemplos, regressões do núcleo/mapas/gameplay/recursos/classes/construtores/herança/módulos, testes de isolamento e colisão, casos negativos, AddressSanitizer e UndefinedBehaviorSanitizer.
