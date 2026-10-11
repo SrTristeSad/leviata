@@ -1,9 +1,9 @@
 /* ============================================================================
- * LEVIATA 3.2 - RUNTIME DE CLASSES E OBJETOS DE USUÁRIO
+ * LEVIATA 3.2 - RUNTIME DE CLASSES E OBJETOS
  *
  * Classes e instâncias usam LV_TYPE_MAP, que já é rastreado pelo GC.
- * As chaves reservadas começam com '@', símbolo que não pode iniciar um
- * identificador Leviata e portanto não colide com campos do usuário.
+ * Recursos nativos (imagem/som/arquivo) também passam pelo mesmo despachante
+ * público de campos/métodos. O compilador não precisa conhecer o tipo concreto.
  * ============================================================================ */
 #include "leviata_classes.h"
 #include <stdio.h>
@@ -130,6 +130,12 @@ static int chave_reservada(char *out, size_t out_size,
     return n >= 0 && (size_t)n < out_size;
 }
 
+static int chave_handler(char *out, size_t out_size,
+                         const char *tipo, const char *nome) {
+    int n = snprintf(out, out_size, "@%s.%s", tipo, nome ? nome : "");
+    return n >= 0 && (size_t)n < out_size;
+}
+
 static LvObject *buscar_metodo_classe(LvObject *classe, const char *nome) {
     char key[LV_MAX_IDENTIFIER];
     if (!chave_reservada(key, sizeof(key), "metodo", nome)) return NULL;
@@ -247,13 +253,34 @@ static LvObject *classe_novo(LvVM *vm, int argc, LvObject **args) {
     return instancia;
 }
 
+/* ============================================================
+ * Despacho unificado de campo/método
+ * ============================================================ */
 static LvObject *obj_campo(LvVM *vm, int argc, LvObject **args) {
-    if (argc < 2 || !e_instancia(args[0]) ||
+    if (argc < 2 || !args[0] ||
         !args[1] || args[1]->type != LV_TYPE_STRING)
         return vm->nil_singleton;
 
-    LvObject *valor = mapa_get(args[0], args[1]->as.string.data);
-    return valor ? valor : vm->nil_singleton;
+    const char *nome = args[1]->as.string.data;
+
+    if (e_instancia(args[0])) {
+        LvObject *valor = mapa_get(args[0], nome);
+        return valor ? valor : vm->nil_singleton;
+    }
+
+    if (args[0]->type == LV_TYPE_OBJECT) {
+        char handler_name[LV_MAX_IDENTIFIER];
+        if (!chave_handler(handler_name, sizeof(handler_name), "campo", nome))
+            return vm->nil_singleton;
+        LvObject *handler = hmap_get(&vm->globals, handler_name);
+        if (!handler || handler->type != LV_TYPE_NATIVE)
+            return vm->nil_singleton;
+        LvObject *handler_args[1] = { args[0] };
+        LvObject *ret = handler->as.native.fn(vm, 1, handler_args);
+        return ret ? ret : vm->nil_singleton;
+    }
+
+    return vm->nil_singleton;
 }
 
 static LvObject *obj_definir(LvVM *vm, int argc, LvObject **args) {
@@ -267,13 +294,28 @@ static LvObject *obj_definir(LvVM *vm, int argc, LvObject **args) {
 }
 
 static LvObject *obj_metodo(LvVM *vm, int argc, LvObject **args) {
-    if (argc < 2 || !e_instancia(args[0]) ||
+    if (argc < 2 || !args[0] ||
         !args[1] || args[1]->type != LV_TYPE_STRING)
         return vm->nil_singleton;
 
-    LvObject *classe = classe_da_instancia(args[0]);
-    LvObject *metodo = buscar_metodo_classe(classe, args[1]->as.string.data);
-    return metodo ? metodo : vm->nil_singleton;
+    const char *nome = args[1]->as.string.data;
+
+    if (e_instancia(args[0])) {
+        LvObject *classe = classe_da_instancia(args[0]);
+        LvObject *metodo = buscar_metodo_classe(classe, nome);
+        return metodo ? metodo : vm->nil_singleton;
+    }
+
+    if (args[0]->type == LV_TYPE_OBJECT) {
+        char handler_name[LV_MAX_IDENTIFIER];
+        if (!chave_handler(handler_name, sizeof(handler_name), "metodo", nome))
+            return vm->nil_singleton;
+        LvObject *handler = hmap_get(&vm->globals, handler_name);
+        if (handler && handler->type == LV_TYPE_NATIVE)
+            return handler;
+    }
+
+    return vm->nil_singleton;
 }
 
 static LvObject *classe_nome(LvVM *vm, int argc, LvObject **args) {
@@ -284,6 +326,47 @@ static LvObject *classe_nome(LvVM *vm, int argc, LvObject **args) {
 
     LvObject *nome = mapa_get(classe, "@nome");
     return nome ? nome : vm->nil_singleton;
+}
+
+/* tipo() conhece tanto objetos de recurso quanto classes/instâncias. */
+static LvObject *classe_tipo(LvVM *vm, int argc, LvObject **args) {
+    const char *nome = "nulo";
+    if (argc < 1 || !args[0])
+        return gc_alloc_string(vm, nome, strlen(nome));
+
+    LvObject *o = args[0];
+    switch (o->type) {
+        case LV_TYPE_NULL: nome = "nulo"; break;
+        case LV_TYPE_BOOL: nome = "bool"; break;
+        case LV_TYPE_INT: nome = "int"; break;
+        case LV_TYPE_FLOAT: nome = "dec"; break;
+        case LV_TYPE_STRING: nome = "txt"; break;
+        case LV_TYPE_LIST: nome = "lista"; break;
+        case LV_TYPE_FUNCTION: nome = "funcao"; break;
+        case LV_TYPE_NATIVE: nome = "nativa"; break;
+        case LV_TYPE_OBJECT:
+            if (o->as.object.kind == LV_OBJECT_IMAGE) nome = "imagem";
+            else if (o->as.object.kind == LV_OBJECT_SOUND) nome = "som";
+            else if (o->as.object.kind == LV_OBJECT_FILE) nome = "arquivo";
+            else nome = "objeto";
+            break;
+        case LV_TYPE_MAP:
+            if (e_classe(o)) {
+                nome = "classe";
+            } else if (e_instancia(o)) {
+                LvObject *classe = classe_da_instancia(o);
+                LvObject *nome_classe = classe ? mapa_get(classe, "@nome") : NULL;
+                if (nome_classe && nome_classe->type == LV_TYPE_STRING)
+                    return nome_classe;
+                nome = "objeto";
+            } else {
+                nome = "mapa";
+            }
+            break;
+        default: nome = "objeto"; break;
+    }
+
+    return gc_alloc_string(vm, nome, strlen(nome));
 }
 
 void leviata_classes_register(LvVM *vm) {
@@ -298,4 +381,6 @@ void leviata_classes_register(LvVM *vm) {
     vm_register_native(vm, "@obj.definir", obj_definir, 3);
     vm_register_native(vm, "@obj.metodo", obj_metodo, 2);
     vm_register_native(vm, "@obj.classe_nome", classe_nome, 1);
+
+    vm_register_native(vm, "tipo", classe_tipo, 1);
 }
