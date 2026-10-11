@@ -1,0 +1,95 @@
+/* Regressao de mapas/dicionarios do Leviata 3.8. */
+
+funcao falhar(mensagem) {
+    escreva("FALHA_MAPAS:", mensagem)
+    funcao_que_nao_existe()
+}
+
+var pessoa = {
+    nome: "Alex",
+    idade: 29,
+    endereco: {
+        cidade: "Salvador",
+        uf: "BA"
+    },
+    "nome-completo": "Alex Oliveira",
+}
+
+se tipo(pessoa) != "mapa" {
+    falhar("tipo mapa")
+}
+
+se tamanho(pessoa) != 4 {
+    falhar("tamanho inicial")
+}
+
+se pessoa.nome != "Alex" {
+    falhar("acesso por ponto")
+}
+
+se pessoa["idade"] != 29 {
+    falhar("acesso por colchetes")
+}
+
+se pessoa.endereco.cidade != "Salvador" {
+    falhar("mapa aninhado")
+}
+
+se pessoa["nome-completo"] != "Alex Oliveira" {
+    falhar("chave texto")
+}
+
+pessoa.idade = 30
+pessoa["ativo"] = verdadeiro
+pessoa["idade"] += 2
+
+se pessoa.idade != 32 {
+    falhar("atribuicao composta")
+}
+
+se pessoa.ativo != verdadeiro ou tamanho(pessoa) != 5 {
+    falhar("insercao por indice")
+}
+
+se nao contem(pessoa, "ativo") {
+    falhar("contem chave")
+}
+
+var nomes = chaves(pessoa)
+var dados = valores(pessoa)
+se tamanho(nomes) != 5 ou tamanho(dados) != 5 {
+    falhar("chaves e valores")
+}
+
+var removido = remover(pessoa, "ativo")
+se removido != verdadeiro ou contem(pessoa, "ativo") ou tamanho(pessoa) != 4 {
+    falhar("remover chave")
+}
+
+var vazio = {}
+se bool(vazio) != falso ou tamanho(vazio) != 0 {
+    falhar("mapa vazio")
+}
+
+vazio.valor = 10
+se bool(vazio) != verdadeiro ou vazio.valor != 10 {
+    falhar("mapa vazio mutavel")
+}
+
+limpar(vazio)
+se tamanho(vazio) != 0 ou bool(vazio) != falso {
+    falhar("limpar mapa")
+}
+
+/* A camada de indice 3.8 precisa preservar listas. */
+var lista_teste = [10, 20, 30]
+se lista_teste[1] != 20 {
+    falhar("indice de lista")
+}
+lista_teste[1] = 5
+lista_teste[1] += 7
+se lista_teste[1] != 12 {
+    falhar("atribuicao de lista")
+}
+
+escreva("MAPAS_OK")
