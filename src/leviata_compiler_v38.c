@@ -1,17 +1,14 @@
 /* ============================================================================
  * LEVIATA 3.8 - COMPILADOR DE INDEXACAO GENERICA
  *
- * A VM 3.x possuia opcodes de indice acoplados a listas. Esta camada converte
- * indexacao da AST para chamadas internas capazes de operar em listas e mapas,
- * preservando o restante do compilador 3.5 sem duplicacao.
+ * Esta camada prepara a AST e delega para o compilador 3.5. O runtime 3.8
+ * chama explicitamente `compiler_compile_program_v38`, sem substituir nem
+ * duplicar a implementacao madura do compilador anterior.
  * ============================================================================ */
+#include "leviata_compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define compiler_compile_program compiler_compile_program_v35
-#include "leviata_compiler_v35.c"
-#undef compiler_compile_program
 
 static AstNode *v38_ident(const char *nome, int linha) {
     AstNode *n = ast_alloc(AST_IDENT, linha);
@@ -77,8 +74,7 @@ static void v38_atribuicao_indice(AstNode *n) {
     v38_indices(&indice);
 
     /* O parser representa a[i] += x como:
-     * assign(target=a[i], value=binop(left=target, right=x)).
-     * Detectamos esse compartilhamento antes de transformar a leitura. */
+     * assign(target=a[i], value=binop(left=target, right=x)). */
     if (value && value->type == AST_BINOP && value->as.binop.left == target) {
         const char *op = v38_operador(value->as.binop.op);
         if (op) {
@@ -216,7 +212,7 @@ static void v38_indices(AstNode **slot) {
     }
 }
 
-int compiler_compile_program(Compiler *c, AstNode *program, Chunk *out) {
+int compiler_compile_program_v38(Compiler *c, AstNode *program, Chunk *out) {
     v38_indices(&program);
-    return compiler_compile_program_v35(c, program, out);
+    return compiler_compile_program(c, program, out);
 }
