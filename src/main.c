@@ -15,6 +15,7 @@
 #include "leviata_resources.h"
 #include "leviata_classes.h"
 #include "leviata_super.h"
+#include "leviata_maps.h"
 #include "leviata_runtime.h"
 
 static void print_banner(void) {
@@ -66,13 +67,16 @@ static void run_repl(LvRuntime *rt, LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.7.0\"\n"
+    "var versao = \"3.8.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
     "var soma_notas = 0\n"
     "para nota em notas { soma_notas = soma_notas + nota }\n"
     "escreva(\"Itens:\", tamanho(notas), \" soma:\", soma_notas)\n"
+    "var perfil = { nome: \"Leviata\", versao: 3.8 }\n"
+    "perfil.estavel = verdadeiro\n"
+    "escreva(\"Mapa:\", perfil.nome, perfil[\"versao\"], tamanho(perfil))\n"
     "var config = arquivo(\"leviata_demo.tmp\")\n"
     "config.escreva(\"objetos=ok\")\n"
     "escreva(\"Recurso:\", tipo(config), config.caminho, config.leia())\n"
@@ -89,7 +93,7 @@ static const char *DEMO_PROGRAMA =
     "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvRuntime *rt, LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.7 ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3.8 ===\n\n");
     leviata_execute_source(rt, vm, DEMO_PROGRAMA, "<demo>", 0);
     remove("leviata_demo.tmp");
 }
@@ -131,6 +135,7 @@ int main(int argc, char *argv[]) {
     leviata_resources_register(&vm);
     leviata_classes_register(&vm);
     leviata_super_register(&vm);
+    leviata_maps_register(&vm);
     leviata_canon_finalize(&vm);
 
     int exit_code = 0;
