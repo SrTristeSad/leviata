@@ -67,15 +67,16 @@ static void run_repl(LvRuntime *rt, LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.8.0\"\n"
+    "var versao = \"3.9.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
     "var soma_notas = 0\n"
     "para nota em notas { soma_notas = soma_notas + nota }\n"
     "escreva(\"Itens:\", tamanho(notas), \" soma:\", soma_notas)\n"
-    "var perfil = { nome: \"Leviata\", versao: 3.8 }\n"
+    "var perfil = { nome: \"Leviata\", versao: 3.9 }\n"
     "perfil.estavel = verdadeiro\n"
+    "para chave, valor em perfil { escreva(\"Campo:\", chave, valor) }\n"
     "escreva(\"Mapa:\", perfil.nome, perfil[\"versao\"], tamanho(perfil))\n"
     "var config = arquivo(\"leviata_demo.tmp\")\n"
     "config.escreva(\"objetos=ok\")\n"
@@ -93,7 +94,7 @@ static const char *DEMO_PROGRAMA =
     "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvRuntime *rt, LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.8 ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3.9 ===\n\n");
     leviata_execute_source(rt, vm, DEMO_PROGRAMA, "<demo>", 0);
     remove("leviata_demo.tmp");
 }
