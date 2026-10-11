@@ -1,0 +1,10 @@
+/* Leviata 3.3 - modulos por arquivo. */
+
+usar "modulos/util.pt"
+
+escreva(saudacao_modulo("Leviata"))
+
+var ponto = novo PontoModulo()
+ponto.mover(5, 8)
+
+escreva("Ponto:", ponto.x, ponto.y)
