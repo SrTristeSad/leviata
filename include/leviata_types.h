@@ -8,7 +8,7 @@
 #include <stddef.h>
 
 #define LV_VERSION_MAJOR  3
-#define LV_VERSION_MINOR  2
+#define LV_VERSION_MINOR  3
 #define LV_VERSION_PATCH  0
 
 #define LV_MAX_IDENTIFIER  128
@@ -36,8 +36,6 @@ typedef enum {
     LV_TYPE_OBJECT
 } LvType;
 
-/* Objetos nativos leves. Texturas e buffers de áudio continuam pertencendo
- * ao backend/caches; o valor da VM guarda só metadados estáveis. */
 typedef enum {
     LV_OBJECT_GENERIC = 0,
     LV_OBJECT_IMAGE,
