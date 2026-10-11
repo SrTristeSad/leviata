@@ -24,6 +24,7 @@ jobs:
           ./leviata exemplos/hello.pt
           ./leviata exemplos/listas.pt
           ./leviata exemplos/matematica.pt
+          ./leviata exemplos/classes.pt
           ./leviata exemplos/jogo.pt
           ./leviata exemplos/motor2d.pt
           ./leviata exemplos/mundo.pt
