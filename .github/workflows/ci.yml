@@ -33,8 +33,15 @@ jobs:
           ./leviata testes/nucleo.pt | tee /tmp/leviata-core.log
           grep -q "NUCLEO_OK" /tmp/leviata-core.log
 
+      - name: Run gameplay regression suite
+        run: |
+          ./leviata testes/gameplay.pt | tee /tmp/leviata-gameplay.log
+          grep -q "GAMEPLAY_OK" /tmp/leviata-gameplay.log
+
       - name: Build with sanitizers
         run: make debug
 
-      - name: Run core regression with sanitizers
-        run: ./leviata_debug testes/nucleo.pt
+      - name: Run regressions with sanitizers
+        run: |
+          ./leviata_debug testes/nucleo.pt
+          ./leviata_debug testes/gameplay.pt
