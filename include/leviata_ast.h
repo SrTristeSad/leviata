@@ -29,19 +29,21 @@ typedef enum {
     AST_COMPOUND_ASSIGN,
     AST_CALL,
     AST_METHOD_CALL,
+    AST_NEW,
 
     /* Declarações */
     AST_VAR_DECL,
     AST_CONST_DECL,
     AST_FUNC_DECL,
+    AST_CLASS_DECL,
     AST_RETURN,
 
     /* Controle de fluxo */
     AST_BLOCK,
     AST_IF,
     AST_WHILE,
-    AST_FOR_RANGE,      /* para i de 1 ate 10 */
-    AST_FOR_EACH,       /* para item em lista */
+    AST_FOR_RANGE,
+    AST_FOR_EACH,
     AST_BREAK,
     AST_CONTINUE,
 
@@ -84,6 +86,10 @@ typedef struct AstNode {
         } call;
 
         struct {
+            char class_name[LV_MAX_IDENTIFIER];
+        } new_expr;
+
+        struct {
             char name[LV_MAX_IDENTIFIER];
             struct AstNode *init;
         } var_decl;
@@ -94,6 +100,14 @@ typedef struct AstNode {
             int param_count;
             struct AstNode *body;
         } func_decl;
+
+        struct {
+            char name[LV_MAX_IDENTIFIER];
+            char parent[LV_MAX_IDENTIFIER];
+            int has_parent;
+            struct AstNode **members;
+            int member_count;
+        } class_decl;
 
         struct { struct AstNode *value; } ret;
 
