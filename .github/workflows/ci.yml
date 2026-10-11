@@ -63,6 +63,21 @@ jobs:
             exit 1
           fi
 
+      - name: Run super regression suite
+        run: |
+          ./leviata testes/super.pt | tee /tmp/leviata-super.log
+          grep -q "SUPER_OK" /tmp/leviata-super.log
+
+          if ./leviata testes/super_sem_pai.pt; then
+            echo "ERRO: super em classe sem pai deveria falhar"
+            exit 1
+          fi
+
+          if ./leviata testes/super_fora_classe.pt; then
+            echo "ERRO: super fora de classe deveria falhar"
+            exit 1
+          fi
+
       - name: Run module regression suite
         run: |
           ./leviata testes/modulos_main.pt | tee /tmp/leviata-modules.log
@@ -106,5 +121,6 @@ jobs:
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
           ./leviata_debug testes/construtores.pt
+          ./leviata_debug testes/super.pt
           ./leviata_debug testes/modulos_main.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
