@@ -7,6 +7,7 @@
  * ============================================================================ */
 #include "leviata_super.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 static uint32_t super_hash(const char *key) {
