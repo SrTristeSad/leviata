@@ -87,6 +87,9 @@ jobs:
           ./leviata testes/modulos_alias_main.pt | tee /tmp/leviata-module-alias.log
           grep -q "MOD_ALIAS_OK" /tmp/leviata-module-alias.log
 
+          ./leviata testes/modulos_isolamento_main.pt | tee /tmp/leviata-module-isolation.log
+          grep -q "MOD_ISOLAMENTO_OK" /tmp/leviata-module-isolation.log
+
           if ./leviata testes/modulos/ciclo_a.pt; then
             echo "ERRO: ciclo de modulos deveria falhar"
             exit 1
@@ -104,6 +107,16 @@ jobs:
 
           if ./leviata testes/modulos_alias_nao_exportado.pt; then
             echo "ERRO: alias nao deveria expor simbolo sem exportar"
+            exit 1
+          fi
+
+          if ./leviata testes/modulos_isolamento_privado.pt; then
+            echo "ERRO: simbolo privado vazou para o chamador"
+            exit 1
+          fi
+
+          if ./leviata testes/modulos_isolamento_alias_vazamento.pt; then
+            echo "ERRO: import com alias vazou exportacao sem prefixo"
             exit 1
           fi
 
@@ -138,4 +151,5 @@ jobs:
           ./leviata_debug testes/super.pt
           ./leviata_debug testes/modulos_main.pt
           ./leviata_debug testes/modulos_alias_main.pt
+          ./leviata_debug testes/modulos_isolamento_main.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
