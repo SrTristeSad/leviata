@@ -1,0 +1,11 @@
+classe Usuario {
+    var nome = ""
+
+    funcao iniciar(nome) {
+        este.nome = nome
+    }
+}
+
+/* Deve falhar: o construtor exige um argumento. */
+var invalido = novo Usuario()
+escreva(invalido.nome)
