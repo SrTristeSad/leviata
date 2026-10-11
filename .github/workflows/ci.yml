@@ -27,6 +27,7 @@ jobs:
           ./leviata exemplos/classes.pt
           ./leviata exemplos/construtores.pt
           ./leviata exemplos/modulos.pt
+          ./leviata exemplos/modulos_alias.pt
           ./leviata exemplos/jogo.pt
           ./leviata exemplos/motor2d.pt
           ./leviata exemplos/mundo.pt
