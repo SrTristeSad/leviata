@@ -44,14 +44,12 @@ enquanto (nao jogo_deve_fechar()) {
     jogo_limpar_fundo(18, 22, 32)
     jogo_camera_iniciar()
 
-    /* Desenho debug do mapa carregado do arquivo. */
-    para i de 0 ate tamanho(mapa) - 1 {
-        se (mapa[i] >= 0) {
-            var tx = i % largura
-            var ty = piso(i / largura)
-            jogo_desenhar_retangulo(tx * tile, ty * tile, tile, tile, 65, 76, 95)
-        }
-    }
+    /* Geometria visual correspondente ao mapa externo de exemplo. */
+    jogo_desenhar_retangulo(0, 288, 640, 32, 65, 76, 95)
+    jogo_desenhar_retangulo(384, 96, 96, 32, 65, 76, 95)
+    jogo_desenhar_retangulo(384, 128, 32, 96, 65, 76, 95)
+    jogo_desenhar_retangulo(448, 128, 32, 96, 65, 76, 95)
+    jogo_desenhar_retangulo(384, 224, 96, 32, 65, 76, 95)
 
     entidade_desenhar(jogador, 80, 190, 255)
     jogo_camera_finalizar()
