@@ -1,9 +1,13 @@
-/* Biblioteca para regressão de exportar/alias do Leviata 3.6. */
+/* Biblioteca para regressão de exportar/alias e isolamento do Leviata 3.7. */
 
-exportar const versao_modulo = "3.6"
+exportar const versao_modulo = "3.7"
+
+var fator_privado = 2
+var secreto = 999
 
 exportar funcao dobro(valor) {
-    retorne valor * 2
+    /* A função exportada precisa continuar enxergando um global privado. */
+    retorne valor * fator_privado
 }
 
 exportar classe Caixa {
@@ -14,8 +18,6 @@ exportar classe Caixa {
     }
 
     funcao dobro() {
-        retorne este.valor * 2
+        retorne este.valor * fator_privado
     }
 }
-
-var secreto = 999
