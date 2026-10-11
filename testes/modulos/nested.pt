@@ -1,0 +1,6 @@
+/* Import relativo ao proprio modulo, nao ao processo. */
+usar "base.pt"
+
+funcao quadruplo(valor) {
+    retorne dobro(dobro(valor))
+}
