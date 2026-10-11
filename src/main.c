@@ -66,7 +66,7 @@ static void run_repl(LvRuntime *rt, LvVM *vm) {
 
 static const char *DEMO_PROGRAMA =
     "var nome = \"Leviata\"\n"
-    "var versao = \"3.6.0\"\n"
+    "var versao = \"3.7.0\"\n"
     "escreva(\"Sistema:\", nome, \"v\" + versao)\n"
     "var notas = [8, 9, 7, 10]\n"
     "adicionar(notas, 9)\n"
@@ -89,7 +89,7 @@ static const char *DEMO_PROGRAMA =
     "escreva(\"Cena:\", cena.atual())\n";
 
 static void run_demo(LvRuntime *rt, LvVM *vm) {
-    printf("=== DEMONSTRACAO LEVIATA 3.6 ===\n\n");
+    printf("=== DEMONSTRACAO LEVIATA 3.7 ===\n\n");
     leviata_execute_source(rt, vm, DEMO_PROGRAMA, "<demo>", 0);
     remove("leviata_demo.tmp");
 }
