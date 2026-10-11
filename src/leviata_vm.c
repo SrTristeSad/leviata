@@ -133,7 +133,50 @@ int chunk_add_constant(Chunk *c, ConstValue cv) {
 /* ============================================================
  * GARBAGE COLLECTOR
  * ============================================================ */
+static void gc_free_object_payload(LvObject *obj) {
+    if (!obj) return;
+
+    if (obj->type == LV_TYPE_STRING && obj->as.string.data) {
+        free(obj->as.string.data);
+        obj->as.string.data = NULL;
+        obj->as.string.length = 0;
+    } else if (obj->type == LV_TYPE_LIST && obj->as.list.items) {
+        free(obj->as.list.items);
+        obj->as.list.items = NULL;
+        obj->as.list.count = 0;
+        obj->as.list.capacity = 0;
+    } else if (obj->type == LV_TYPE_MAP && obj->as.map.buckets) {
+        free(obj->as.map.buckets);
+        obj->as.map.buckets = NULL;
+        obj->as.map.count = 0;
+        obj->as.map.capacity = 0;
+    }
+}
+
+static void gc_free_all(LvVM *vm) {
+    LvObject *obj = vm->gc.all_objects;
+    while (obj) {
+        LvObject *next = obj->gc_next;
+        gc_free_object_payload(obj);
+        free(obj);
+        obj = next;
+    }
+
+    vm->gc.all_objects = NULL;
+    vm->gc.object_count = 0;
+    vm->gc.bytes_allocated = 0;
+    vm->gc.gc_threshold = LV_GC_THRESHOLD;
+}
+
 LvObject *gc_alloc_object(LvVM *vm, LvType type) {
+    /*
+     * Coleta ANTES da nova alocação. A implementação antiga coletava logo
+     * depois de inserir o objeto recém-criado na lista do GC, quando ele ainda
+     * não estava no stack/global e portanto podia ser varrido prematuramente.
+     */
+    if (vm->gc.object_count >= vm->gc.gc_threshold)
+        gc_collect(vm);
+
     LvObject *obj = (LvObject*)calloc(1, sizeof(LvObject));
     if (!obj) {
         fprintf(stderr, "[LEVIATA][GC] Sem memória!\n");
@@ -145,10 +188,6 @@ LvObject *gc_alloc_object(LvVM *vm, LvType type) {
     vm->gc.all_objects = obj;
     vm->gc.object_count++;
     vm->gc.bytes_allocated += sizeof(LvObject);
-
-    if (vm->gc.object_count >= vm->gc.gc_threshold)
-        gc_collect(vm);
-
     return obj;
 }
 
@@ -241,13 +280,10 @@ void gc_sweep(LvVM *vm) {
             vm->gc.object_count--;
             vm->gc.bytes_allocated -= sizeof(LvObject);
 
-            if (obj->type == LV_TYPE_STRING && obj->as.string.data) {
+            if (obj->type == LV_TYPE_STRING && obj->as.string.data)
                 vm->gc.bytes_allocated -= obj->as.string.length + 1;
-                free(obj->as.string.data);
-            } else if (obj->type == LV_TYPE_LIST && obj->as.list.items) {
-                free(obj->as.list.items);
-            }
 
+            gc_free_object_payload(obj);
             free(obj);
         } else {
             obj->gc_marked = 0;
@@ -322,23 +358,36 @@ void vm_init(LvVM *vm) {
 }
 
 void vm_free(LvVM *vm) {
-    gc_collect(vm);
+    if (!vm) return;
+
+    /* A tabela só possui referências para objetos do GC; ela não os possui. */
+    hmap_free(&vm->globals);
+
+    /* No encerramento não existem raízes a preservar: libere tudo diretamente. */
+    vm->stack_top = 0;
+    vm->frame_count = 0;
+    vm->running = 0;
+    gc_free_all(vm);
+
+    for (int i = 0; i < vm->func_count; i++) {
+        if (vm->functions[i]) {
+            chunk_free(vm->functions[i]);
+            free(vm->functions[i]);
+            vm->functions[i] = NULL;
+        }
+    }
+    vm->func_count = 0;
 
     free(vm->nil_singleton);
     free(vm->true_singleton);
     free(vm->false_singleton);
-
-    for (int i = 0; i < vm->func_count; i++) {
-        chunk_free(vm->functions[i]);
-        free(vm->functions[i]);
-    }
-
-    hmap_free(&vm->globals);
+    vm->nil_singleton = NULL;
+    vm->true_singleton = NULL;
+    vm->false_singleton = NULL;
 }
 
 void vm_register_native(LvVM *vm, const char *name, LvNativeFn fn, int arity) {
     LvObject *obj = gc_alloc_object(vm, LV_TYPE_NATIVE);
-    obj->gc_marked = 1;
     strncpy(obj->as.native.name, name, LV_MAX_IDENTIFIER - 1);
     obj->as.native.name[LV_MAX_IDENTIFIER - 1] = '\0';
     obj->as.native.fn = fn;
