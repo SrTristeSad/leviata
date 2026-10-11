@@ -10,7 +10,7 @@ TARGET  ?= leviata
 SRC = src/main.c \
       src/leviata_lexer.c \
       src/leviata_ast.c \
-      src/leviata_parser_v34.c \
+      src/leviata_parser_v36.c \
       src/leviata_vm.c \
       src/leviata_compiler_v35.c \
       src/leviata_stdlib.c \
@@ -21,7 +21,7 @@ SRC = src/main.c \
       src/leviata_resources.c \
       src/leviata_classes.c \
       src/leviata_super.c \
-      src/leviata_runtime.c \
+      src/leviata_runtime_v36.c \
       src/leviata_canon_finalize.c
 
 RAYLIB_CFLAGS := $(shell pkg-config --cflags raylib 2>/dev/null)
