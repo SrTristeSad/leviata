@@ -1,5 +1,5 @@
 /* ============================================================================
- * MOTOR LEVIATA - TIPOS FUNDAMENTAIS
+ * LEVIATA 3 - TIPOS FUNDAMENTAIS
  * ============================================================================ */
 #ifndef LEVIATA_TYPES_H
 #define LEVIATA_TYPES_H
@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define LV_VERSION_MAJOR  2
-#define LV_VERSION_MINOR  4
+#define LV_VERSION_MAJOR  3
+#define LV_VERSION_MINOR  0
 #define LV_VERSION_PATCH  0
 
 #define LV_MAX_IDENTIFIER  128
@@ -49,12 +49,12 @@ struct LvObject {
     struct LvObject *gc_next;
 
     union {
-        int64_t  i_val;
-        double   f_val;
+        int64_t i_val;
+        double f_val;
 
         struct {
-            char   *data;
-            size_t  length;
+            char *data;
+            size_t length;
         } string;
 
         struct {
