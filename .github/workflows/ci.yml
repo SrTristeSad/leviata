@@ -52,6 +52,16 @@ jobs:
           ./leviata testes/classes.pt | tee /tmp/leviata-classes.log
           grep -q "CLASSES_OK" /tmp/leviata-classes.log
 
+      - name: Run constructor regression suite
+        run: |
+          ./leviata testes/construtores.pt | tee /tmp/leviata-constructors.log
+          grep -q "CONSTRUTORES_OK" /tmp/leviata-constructors.log
+
+          if ./leviata testes/construtor_erro.pt; then
+            echo "ERRO: construtor com aridade errada deveria falhar"
+            exit 1
+          fi
+
       - name: Run module regression suite
         run: |
           ./leviata testes/modulos_main.pt | tee /tmp/leviata-modules.log
@@ -94,5 +104,6 @@ jobs:
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
+          ./leviata_debug testes/construtores.pt
           ./leviata_debug testes/modulos_main.pt
           rm -f testes/.recurso_tmp.txt testes/.recurso_tmp2.txt
