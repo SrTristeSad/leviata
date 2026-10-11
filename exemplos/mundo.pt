@@ -17,7 +17,7 @@ entidade_colisor(jogador, verdadeiro)
 
 cena_mudar("mundo")
 
-quanto = entidade_quantidade()
+var quanto = entidade_quantidade()
 escrever("Entidades ativas:", quanto)
 
 /* O backend stub executa um frame; com Raylib o loop e real. */
