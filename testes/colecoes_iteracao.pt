@@ -1,0 +1,53 @@
+/* Leviata 3.10 - regressao de iteracao dupla em colecoes */
+
+var lista = ["a", "b", "c"]
+var soma_indices = 0
+var vistos = ""
+var ciclos = 0
+
+para indice, valor em lista {
+    ciclos = ciclos + 1
+    soma_indices = soma_indices + indice
+    vistos = vistos + valor
+
+    /* A iteracao trabalha sobre snapshot: este item entra na lista real,
+       mas nao aparece no laco que ja comecou. */
+    se indice == 0 {
+        adicionar(lista, "d")
+    }
+}
+
+se ciclos != 3 { escreva("FALHA_LISTA_CICLOS") }
+se soma_indices != 3 { escreva("FALHA_LISTA_INDICES") }
+se vistos != "abc" { escreva("FALHA_LISTA_VALORES") }
+se tamanho(lista) != 4 { escreva("FALHA_LISTA_MUTACAO") }
+
+var p = pares(lista)
+se tamanho(p) != 4 { escreva("FALHA_PARES_LISTA_TAMANHO") }
+se p[0][0] != 0 { escreva("FALHA_PARES_LISTA_INDICE") }
+se p[0][1] != "a" { escreva("FALHA_PARES_LISTA_VALOR") }
+se p[3][0] != 3 { escreva("FALHA_PARES_LISTA_ULTIMO_INDICE") }
+se p[3][1] != "d" { escreva("FALHA_PARES_LISTA_ULTIMO_VALOR") }
+
+var dados = { a: 10, b: 20, c: 30 }
+var soma_mapa = 0
+var quantidade_mapa = 0
+
+para chave, valor em dados {
+    quantidade_mapa = quantidade_mapa + 1
+    soma_mapa = soma_mapa + valor
+}
+
+se quantidade_mapa != 3 { escreva("FALHA_MAPA_CICLOS") }
+se soma_mapa != 60 { escreva("FALHA_MAPA_VALORES") }
+
+/* continue e pare continuam usando a mesma semantica do foreach base. */
+var visitados = 0
+para indice, valor em [10, 20, 30, 40] {
+    se indice == 1 { continue }
+    visitados = visitados + 1
+    se valor == 30 { pare }
+}
+se visitados != 2 { escreva("FALHA_CONTROLE_LACO") }
+
+escreva("COLECOES_ITERACAO_OK")
