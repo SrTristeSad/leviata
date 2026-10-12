@@ -22,7 +22,7 @@ SRC = src/main.c \
       src/leviata_resources.c \
       src/leviata_classes.c \
       src/leviata_super.c \
-      src/leviata_maps_v39.c \
+      src/leviata_maps_v310.c \
       src/leviata_runtime_v39.c \
       src/leviata_canon_finalize.c
 
