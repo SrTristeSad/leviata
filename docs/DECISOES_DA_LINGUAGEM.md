@@ -4,7 +4,7 @@
 
 **Criado:** 11 de outubro de 2026  
 **Última revisão:** 11 de outubro de 2026  
-**Versão implementada:** Leviata 3.9
+**Versão implementada:** Leviata 3.10
 
 ---
 
@@ -12,13 +12,11 @@
 
 Leviata é uma linguagem própria em português brasileiro. Não é Python traduzido, C traduzido, JavaScript traduzido nem Portugol ampliado.
 
-Conceitos universais são usados quando ajudam, mas a escrita pública segue uma regra central:
+Regra central:
 
 > **Uma ideia, uma forma oficial.**
 
-A linguagem deve ser curta sem ser criptográfica, previsível, consistente e capaz de crescer sem nomes gigantes.
-
-Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, tooling e portabilidade. Siglas são aceitas quando são reconhecíveis e realmente reduzem ruído.
+A linguagem deve ser curta sem ser criptográfica, previsível, consistente e capaz de crescer sem nomes gigantes. Palavras reservadas e APIs canônicas evitam acentos. Siglas são aceitas quando são reconhecíveis e reduzem ruído.
 
 ---
 
@@ -40,12 +38,8 @@ Palavras reservadas e APIs canônicas evitam acentos para facilitar teclado, too
 | retorno | `return` | `retorne` |
 | break | `break` | `pare` |
 | continue | `continue` | `continue` |
-| true | `true` | `verdadeiro` |
-| false | `false` | `falso` |
-| null | `null`, `nil`, `None` | `nulo` |
-| AND | `and`, `&&` | `e` |
-| OR | `or`, `||` | `ou` |
-| NOT | `not`, `!` | `nao` |
+| true / false / null | `true / false / null` | `verdadeiro / falso / nulo` |
+| lógica | `and / or / not` | `e / ou / nao` |
 | classe | `class` | `classe` |
 | nova instância | `new` | `novo` |
 | objeto atual | `this`, `self` | `este` |
@@ -66,11 +60,11 @@ importar  -> usar
 herdar    -> herda
 ```
 
-`&&`, `||` e `!` não fazem parte da lógica canônica. `!=` continua sendo operador de diferença.
+`&&`, `||` e `!` não pertencem à lógica canônica. `!=` continua válido.
 
 ---
 
-# 3. Símbolos e blocos
+# 3. Escrita básica
 
 Símbolos universais permanecem símbolos:
 
@@ -80,17 +74,13 @@ Símbolos universais permanecem símbolos:
 <  >  <=  >=
 ```
 
-Blocos usam chaves:
+Blocos usam `{}`. Ponto e vírgula não é obrigatório. Não existem palavras obrigatórias como `entao`, `faca`, `fimse` ou `fimenquanto`.
 
 ```leviata
 se idade >= 18 {
     escreva("Adulto")
 }
 ```
-
-Não existem `entao`, `faca`, `fimse`, `fimenquanto` ou equivalentes obrigatórios.
-
-Ponto e vírgula não é obrigatório.
 
 ---
 
@@ -112,7 +102,7 @@ var c = dec("3.14")
 var d = bool(1)
 ```
 
-`tipo(valor)` usa os nomes canônicos da linguagem.
+`tipo(valor)` usa nomes canônicos da linguagem.
 
 ---
 
@@ -128,13 +118,9 @@ se idade >= 18 e possui_documento {
 para n de 1 ate 10 {
     escreva(n)
 }
-
-para fruta em frutas {
-    escreva(fruta)
-}
 ```
 
-`ate` é inclusivo. `e` e `ou` possuem short-circuit real. `pare` e `continue` fazem unwind correto de variáveis locais abandonadas.
+`ate` é inclusivo. `e` e `ou` possuem short-circuit. `pare` e `continue` fazem unwind correto das variáveis locais abandonadas.
 
 ---
 
@@ -150,7 +136,9 @@ Função sem `retorne` explícito devolve `nulo`.
 
 ---
 
-# 7. Listas
+# 7. Coleções
+
+## 7.1 Listas
 
 ```leviata
 var nomes = ["Ana", "Bia"]
@@ -159,21 +147,14 @@ inserir(nomes, 1, "Duda")
 remover(nomes, "Bia")
 ```
 
-Operações genéricas devem ser reutilizadas quando o primeiro argumento já deixa o tipo claro. Evitar nomes como `lista_adicionar` na superfície pública.
+Operações genéricas devem ser reutilizadas quando o primeiro argumento já deixa o tipo claro. Evitar APIs como `lista_adicionar`.
 
----
-
-# 8. Mapas — 3.8
-
-Mapa é a estrutura chave/valor da linguagem:
+## 7.2 Mapas
 
 ```leviata
 var pessoa = {
     nome: "Alex",
-    idade: 29,
-    endereco: {
-        cidade: "Salvador"
-    }
+    idade: 29
 }
 ```
 
@@ -182,14 +163,6 @@ Acesso equivalente:
 ```leviata
 pessoa.nome
 pessoa["nome"]
-```
-
-Atribuição:
-
-```leviata
-pessoa.idade = 30
-pessoa["idade"] += 1
-pessoa["online"] = verdadeiro
 ```
 
 Operações:
@@ -206,23 +179,13 @@ limpar(mapa)
 
 Chaves públicas são textos. Chaves iniciadas por `@` são reservadas ao runtime.
 
-`mapa` como estrutura de dados não elimina o namespace especializado `mapa.carregar(...)` do motor de tilemap: o contexto distingue os dois conceitos.
+`mapa` como estrutura de dados não elimina o namespace especializado `mapa.carregar(...)` do motor de tilemap; o contexto distingue os dois conceitos.
 
 ---
 
-# 9. Iteração chave/valor — 3.9
+# 8. Iteração de coleções — 3.10
 
-Forma canônica para percorrer mapas:
-
-```leviata
-para chave, valor em dados {
-    escreva(chave, valor)
-}
-```
-
-Decisões:
-
-1. listas continuam usando uma variável:
+A forma simples continua sendo a forma principal quando só o valor interessa:
 
 ```leviata
 para item em lista {
@@ -230,20 +193,47 @@ para item em lista {
 }
 ```
 
-2. mapas usam duas variáveis quando o programador quer chave e valor;
-3. a expressão da coleção é avaliada uma única vez;
-4. a iteração usa um snapshot dos pares existentes no início do laço;
-5. mutações posteriores do mapa não alteram o conjunto de pares já selecionado;
-6. `pare` e `continue` mantêm a mesma semântica dos outros laços;
-7. `pares(mapa)` expõe explicitamente o snapshot como lista de pares `[chave, valor]` quando isso for útil fora do `para`.
+A forma dupla é única para coleções que fornecem pares:
 
-Internamente, a forma dupla é normalizada para um foreach comum sobre `pares(...)`. Isso reaproveita o bytecode já estável de iteração e evita criar uma segunda implementação de laço.
+```leviata
+para indice, item em lista {
+    escreva(indice, item)
+}
+
+para chave, valor em mapa {
+    escreva(chave, valor)
+}
+```
+
+Semântica oficial:
+
+1. a expressão da coleção é avaliada uma única vez;
+2. lista produz pares `[indice, valor]`;
+3. mapa produz pares `[chave, valor]`;
+4. a forma dupla usa snapshot criado no início do laço;
+5. mutações posteriores na coleção original não alteram os pares já selecionados;
+6. `pare` e `continue` mantêm a mesma semântica dos demais laços;
+7. `pares(colecao)` expõe diretamente a lista de pares usada pela forma dupla.
+
+Exemplos:
+
+```leviata
+pares(["a", "b"])
+/* [[0, "a"], [1, "b"]] */
+
+pares({ a: 10, b: 20 })
+/* [["a", 10], ["b", 20]] em ordem interna */
+```
+
+Decisão de design: **não criar palavras separadas como `enumerar`, `indices`, `entradas` ou `itens_do_mapa` quando a mesma forma `para a, b em colecao` já expressa o conceito.**
+
+Internamente, a forma dupla é normalizada para foreach sobre `pares(...)`, reaproveitando o bytecode estável de iteração.
 
 ---
 
-# 10. Texto
+# 9. Texto e matemática
 
-Funções canônicas:
+Texto:
 
 ```text
 maiusculas
@@ -255,11 +245,7 @@ trecho
 tamanho
 ```
 
----
-
-# 11. Matemática
-
-Matemática não recebe namespace quando o nome já identifica a operação:
+Matemática fica global quando o nome já identifica a operação:
 
 ```text
 raiz
@@ -279,27 +265,15 @@ aleatorio_int
 pi
 ```
 
-Preferir:
-
-```leviata
-raiz(25)
-```
-
-não:
-
-```text
-mat.raiz(25)
-```
+Preferir `raiz(25)`, não `mat.raiz(25)`.
 
 ---
 
-# 12. Função, objeto ou namespace
+# 10. Função, objeto ou namespace
 
 Regra oficial:
 
 > **Função autoexplicativa fica global. Recurso com estado vira objeto. Namespace só aparece quando realmente evita ambiguidade ou organiza uma API ampla.**
-
-Exemplos:
 
 ```leviata
 raiz(25)
@@ -311,13 +285,11 @@ jogo.iniciar("Meu jogo", 960, 540, 60)
 camera.seguir(x, y)
 ```
 
-Isso substitui APIs históricas como `jogo_desenhar_retangulo` e `jogo_camera_seguir`.
+Evitar APIs públicas como `jogo_desenhar_retangulo` e `jogo_camera_seguir`.
 
 ---
 
-# 13. Objetos nativos — 3.1
-
-Recursos com estado são objetos:
+# 11. Objetos nativos
 
 ```leviata
 var foto = imagem("jogador.png")
@@ -334,23 +306,7 @@ escreva(dados.leia())
 
 ---
 
-# 14. Classes — 3.2
-
-```leviata
-classe Pessoa {
-    var nome = "sem nome"
-
-    funcao nomear(valor) {
-        este.nome = valor
-    }
-}
-```
-
-`este` é o receptor implícito. Campos pertencem à instância. Listas usadas como padrão são clonadas por instância.
-
----
-
-# 15. Construtores — 3.4
+# 12. Classes, construtores e herança
 
 ```leviata
 classe Pessoa {
@@ -359,18 +315,12 @@ classe Pessoa {
     funcao iniciar(nome) {
         este.nome = nome
     }
+
+    funcao saudacao() {
+        retorne "Oi " + este.nome
+    }
 }
 
-var alex = novo Pessoa("Alex")
-```
-
-`iniciar(...)` é chamado automaticamente por `novo Classe(args...)`. A aridade deve corresponder. O retorno de `iniciar` é ignorado e `novo` sempre devolve a instância.
-
----
-
-# 16. Herança e `super` — 3.5
-
-```leviata
 classe Funcionario herda Pessoa {
     var cargo = ""
 
@@ -381,27 +331,25 @@ classe Funcionario herda Pessoa {
 }
 ```
 
-`super.metodo(...)` começa a busca na classe pai lexical da classe onde o método atual foi declarado. Construtores pais não são chamados automaticamente em cascata.
+Decisões:
+
+- `este` é o receptor implícito;
+- campos pertencem à instância;
+- `iniciar(...)` é chamado automaticamente por `novo Classe(args...)`;
+- o retorno de `iniciar` é ignorado;
+- `novo` sempre devolve a instância;
+- `super.metodo(...)` começa a busca na classe pai lexical;
+- construtores pais não são chamados automaticamente em cascata.
 
 ---
 
-# 17. Módulos — 3.3 a 3.7
-
-Importação simples:
-
-```leviata
-usar "util.pt"
-```
-
-API explícita:
+# 13. Módulos
 
 ```leviata
 exportar funcao dobro(x) {
     retorne x * 2
 }
 ```
-
-Alias:
 
 ```leviata
 usar "util.pt" como util
@@ -410,25 +358,25 @@ escreva(util.dobro(5))
 
 Regras atuais:
 
-- `usar` e `exportar` só aparecem no escopo principal;
+- `usar` e `exportar` aparecem no escopo principal;
 - caminho relativo é resolvido a partir do importador;
 - cada caminho normalizado executa uma vez;
 - ciclos são detectados;
 - `exportar` aceita `var`, `const`, `funcao` e `classe`;
-- com alias, apenas `alias.simbolo` fica visível;
+- com alias, somente `alias.simbolo` fica visível;
 - privados não vazam;
 - funções e métodos exportados continuam enxergando privados do próprio módulo;
 - dois módulos podem usar os mesmos nomes sem colisão;
 - `novo alias.Classe(...)` funciona;
 - módulos antigos sem `exportar` tratam declarações de topo como públicas por compatibilidade.
 
-O isolamento é feito por linkedição para nomes internos `@m...`, não por uma VM separada para cada arquivo.
+O isolamento usa linkedição para símbolos internos `@m...`, não uma VM separada para cada arquivo.
 
 ---
 
-# 18. O ponto (`.`)
+# 14. O ponto (`.`)
 
-O ponto mantém usos coerentes:
+Usos coerentes:
 
 ```leviata
 camera.seguir(x, y)      /* API estática */
@@ -438,15 +386,11 @@ util.dobro(5)            /* export de módulo */
 novo util.Caixa(10)      /* classe exportada */
 ```
 
-O compilador resolve nomes qualificados conhecidos antes do acesso dinâmico a membro.
-
 ---
 
-# 19. Modelo interno
+# 15. Modelo interno
 
-Detalhes internos não são sintaxe pública.
-
-Podem existir nomes como:
+Detalhes internos não são sintaxe pública. Podem existir nomes como:
 
 ```text
 @classe.criar
@@ -457,11 +401,11 @@ __leviata_par_0
 jogo_desenhar_retangulo
 ```
 
-Eles existem para implementar a linguagem e podem mudar sem alterar o código Leviata válido.
+Eles podem mudar sem alterar código Leviata válido.
 
 ---
 
-# 20. Política de mudanças futuras
+# 16. Política de mudanças futuras
 
 Toda mudança pública deve responder:
 
@@ -476,7 +420,7 @@ Não aceitar uma decisão apenas porque outra linguagem faz assim.
 
 ---
 
-# 21. Registro histórico
+# 17. Registro histórico
 
 ## 10 de outubro de 2026 — vocabulário inicial
 
@@ -516,25 +460,28 @@ Módulos ganharam isolamento real de nomes por linkedição de símbolos interno
 
 ## Leviata 3.8
 
-Mapas viraram estrutura pública da linguagem com literal `{ chave: valor }`, acesso por ponto e índice, escrita, `chaves`, `valores` e integração com operações genéricas.
+Mapas viraram estrutura pública com literal `{ chave: valor }`, acesso por ponto e índice e operações genéricas.
 
 ## Leviata 3.9
 
-Mapas ganharam iteração direta de chave e valor:
+Mapas ganharam iteração direta de chave/valor e `pares(mapa)`, com snapshot e avaliação única da coleção.
+
+## Leviata 3.10
+
+A mesma forma dupla foi generalizada para listas e mapas:
 
 ```leviata
-para chave, valor em mapa {
-    escreva(chave, valor)
-}
+para indice, valor em lista { ... }
+para chave, valor em mapa { ... }
 ```
 
-A coleção é avaliada uma vez e a iteração trabalha sobre snapshot de pares. A implementação reutiliza o foreach existente por meio de uma normalização para `pares(...)`, preservando `pare`, `continue` e o bytecode estável.
+`pares(lista)` devolve `[indice, valor]` e `pares(mapa)` devolve `[chave, valor]`. A decisão evitou acrescentar palavras novas para um conceito que já cabia na sintaxe existente.
 
 ---
 
-# 22. Estado canônico atual
+# 18. Estado canônico atual
 
-A referência implementada é **Leviata 3.9**.
+A referência implementada é **Leviata 3.10**.
 
 Recursos públicos consolidados:
 
@@ -542,21 +489,20 @@ Recursos públicos consolidados:
 escreva / leia
 se / senao / enquanto / para
 para item em lista
+para indice, item em lista
 para chave, valor em mapa
 funcao / retorne
 pare / continue
 verdadeiro / falso / nulo
 e / ou / nao
-listas
-mapas
-chaves / valores / pares
+lista / mapa / pares
 classe / novo / este / herda / super
 iniciar como construtor
 usar / exportar / como
-módulos isolados
 txt / int / dec / bool
 objetos de recurso
 APIs qualificadas
+módulos isolados
 cache de módulos
 detecção de ciclos
 ```
