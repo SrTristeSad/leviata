@@ -1,0 +1,20 @@
+/* Leviata 3.10 - a mesma forma dupla serve para listas e mapas */
+
+var frutas = ["manga", "uva", "caju"]
+
+para indice, fruta em frutas {
+    escreva(indice, fruta)
+}
+
+var estoque = {
+    arroz: 4,
+    feijao: 2,
+    cafe: 6
+}
+
+para produto, quantidade em estoque {
+    escreva(produto, quantidade)
+}
+
+var itens = pares(frutas)
+escreva("pares da lista:", tamanho(itens))
