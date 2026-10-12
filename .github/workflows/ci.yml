@@ -25,6 +25,7 @@ jobs:
           ./leviata exemplos/listas.pt
           ./leviata exemplos/mapas.pt
           ./leviata exemplos/mapas_iteracao.pt
+          ./leviata exemplos/colecoes_iteracao.pt
           ./leviata exemplos/matematica.pt
           ./leviata exemplos/classes.pt
           ./leviata exemplos/construtores.pt
@@ -40,7 +41,7 @@ jobs:
           ./leviata testes/nucleo.pt | tee /tmp/leviata-core.log
           grep -q "NUCLEO_OK" /tmp/leviata-core.log
 
-      - name: Run map regression suite
+      - name: Run collection regression suite
         run: |
           ./leviata testes/mapas.pt | tee /tmp/leviata-maps.log
           grep -q "MAPAS_OK" /tmp/leviata-maps.log
@@ -49,6 +50,13 @@ jobs:
           grep -q "MAPAS_ITERACAO_OK" /tmp/leviata-map-iteration.log
           if grep -q "FALHA_" /tmp/leviata-map-iteration.log; then
             echo "ERRO: regressao na iteracao chave/valor"
+            exit 1
+          fi
+
+          ./leviata testes/colecoes_iteracao.pt | tee /tmp/leviata-collection-iteration.log
+          grep -q "COLECOES_ITERACAO_OK" /tmp/leviata-collection-iteration.log
+          if grep -q "FALHA_" /tmp/leviata-collection-iteration.log; then
+            echo "ERRO: regressao na iteracao dupla de colecoes"
             exit 1
           fi
 
@@ -165,6 +173,7 @@ jobs:
           ./leviata_debug testes/nucleo.pt
           ./leviata_debug testes/mapas.pt
           ./leviata_debug testes/mapas_iteracao.pt
+          ./leviata_debug testes/colecoes_iteracao.pt
           ./leviata_debug testes/gameplay.pt
           ./leviata_debug testes/recursos.pt
           ./leviata_debug testes/classes.pt
